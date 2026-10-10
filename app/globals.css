@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 /*
- * HomeScope NYC design tokens (Stage 1 — Design System)
+ * HomeScope NYC design tokens — visual refresh (post-Stage-1)
  *
- * Tailwind v4: theme colors are defined as CSS variables on :root / .dark
- * and mapped into Tailwind utilities via `@theme inline`. Because the
- * mapping is "inline", utilities like `bg-background` or `text-muted`
- * resolve to the *variable* (not a baked-in value), so toggling the
- * `.dark` class on <html> switches the whole palette at runtime.
+ * Design language taken from the approved reference mockup:
+ * warm off-white page, white cards with hairline borders, pastel icon
+ * chips with toned icons, dark-teal primary actions, deep-navy type.
+ *
+ * Tailwind v4: colors are CSS variables on :root / .dark, mapped into
+ * utilities via `@theme inline`. Because the mapping is "inline",
+ * utilities resolve to the *variable*, so toggling `.dark` on <html>
+ * switches the whole palette at runtime.
  */
 
 /* Class-based dark mode: `dark:` variants respond to `.dark` on <html>,
@@ -16,42 +19,50 @@
 
 :root {
   /* ---- Light theme ---- */
-  --background: #f7f9fc;
+  --background: #f7f6f2; /* warm off-white page */
   --card: #ffffff;
-  --foreground: #14243e; /* primary text */
-  --muted: #5a6b84; /* secondary text — AA contrast on #F7F9FC */
-  --accent: #0f766e; /* primary accent */
+  --foreground: #14243e; /* deep navy type */
+  --muted: #5f6b7a; /* secondary text — ~4.8:1 on #F7F6F2 */
+  --accent: #0f766e; /* dark teal — primary actions */
   --accent-foreground: #ffffff;
-  --accent-soft: #ddf4ed; /* pastel mint wash for accent-tinted surfaces */
-  --border: #e2e8f2; /* subtle borders */
+  --accent-soft: #ddf4ed; /* mint wash for tinted surfaces */
+  --border: #e9e6de; /* warm hairline border */
   --ring: #0f766e;
 
-  /* Pastel surfaces (light) */
+  /* Pastel icon chips (light) + toned icon ink */
   --pastel-blue: #e6f0ff;
+  --pastel-blue-ink: #2f5fc0;
   --pastel-mint: #ddf4ed;
+  --pastel-mint-ink: #0e6b62;
   --pastel-lavender: #eee8fa;
+  --pastel-lavender-ink: #6f4fbb;
   --pastel-peach: #f8ece6;
+  --pastel-peach-ink: #a8642f;
 
   color-scheme: light;
 }
 
 .dark {
   /* ---- Dark theme ---- */
-  --background: #0d1726;
-  --card: #172438;
-  --foreground: #f3f7fc; /* primary text */
-  --muted: #a9b9cd; /* secondary text */
-  --accent: #79e2cf; /* primary accent */
+  --background: #0d1726; /* deep navy page */
+  --card: #172438; /* elevated navy card */
+  --foreground: #f3f7fc;
+  --muted: #a9b9cd;
+  --accent: #79e2cf; /* mint — primary actions */
   --accent-foreground: #0d1726;
-  --accent-soft: #163d39; /* muted mint wash */
+  --accent-soft: #163d39;
   --border: #26374f;
   --ring: #79e2cf;
 
-  /* Muted surfaces (dark equivalents of the pastels) */
+  /* Muted chips (dark equivalents) + lightened icon ink */
   --pastel-blue: #203a58;
+  --pastel-blue-ink: #9dbcf5;
   --pastel-mint: #163d39;
+  --pastel-mint-ink: #7fe3d0;
   --pastel-lavender: #322b4d;
+  --pastel-lavender-ink: #bda9ec;
   --pastel-peach: #4a342c;
+  --pastel-peach-ink: #d9a96b;
 
   color-scheme: dark;
 }
@@ -67,9 +78,13 @@
   --color-border: var(--border);
   --color-ring: var(--ring);
   --color-pastel-blue: var(--pastel-blue);
+  --color-pastel-blue-ink: var(--pastel-blue-ink);
   --color-pastel-mint: var(--pastel-mint);
+  --color-pastel-mint-ink: var(--pastel-mint-ink);
   --color-pastel-lavender: var(--pastel-lavender);
+  --color-pastel-lavender-ink: var(--pastel-lavender-ink);
   --color-pastel-peach: var(--pastel-peach);
+  --color-pastel-peach-ink: var(--pastel-peach-ink);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 

@@ -10,34 +10,37 @@ import { Container } from "./container";
 import { cn } from "@/lib/utils";
 
 /**
- * Sticky site header: brand mark, desktop nav (xl and up),
- * ThemeToggle, and a mobile menu panel with all nav links.
+ * Slim sticky header: brand mark, ThemeToggle, and a mobile menu.
+ * Desktop nav appears at xl and up; the reference home screen is
+ * mobile-first, so the header stays compact.
  */
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
       <Container>
-        <div className="flex h-16 items-center justify-between gap-3">
+        <div className="flex h-14 items-center justify-between gap-3">
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-2.5" aria-label="HomeScope NYC home">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-              <Home className="h-5 w-5" aria-hidden />
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 rounded-lg"
+            aria-label="HomeScope NYC home"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-pastel-mint text-pastel-mint-ink">
+              <Home className="h-[18px] w-[18px]" aria-hidden />
             </span>
-            <span className="leading-tight">
-              <span className="block text-[15px] font-bold tracking-tight">
-                HomeScope NYC
-              </span>
-              <span className="block text-[11px] font-medium text-muted">
-                by Akash Rahman
-              </span>
+            <span className="text-[15px] font-bold tracking-tight">
+              HomeScope NYC
             </span>
           </Link>
 
           {/* Desktop nav */}
-          <nav aria-label="Primary" className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
+          <nav
+            aria-label="Primary"
+            className="hidden min-w-0 flex-1 items-center justify-center xl:flex"
+          >
             <ul className="flex items-center gap-1 overflow-x-auto">
               {NAV_ITEMS.map(({ label, href }) => {
                 const active = pathname === href;
@@ -63,15 +66,15 @@ export function SiteHeader() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {/* Mobile menu button */}
+            {/* Mobile menu button — 44px touch target */}
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
               aria-expanded={menuOpen}
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl border border-border",
-                "bg-card text-foreground transition-colors hover:bg-accent-soft xl:hidden",
+                "flex h-11 w-11 items-center justify-center rounded-xl text-foreground",
+                "transition-colors hover:bg-accent-soft xl:hidden",
               )}
             >
               {menuOpen ? (
@@ -98,13 +101,16 @@ export function SiteHeader() {
                       onClick={() => setMenuOpen(false)}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition-colors",
+                        "flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 text-[15px] font-medium transition-colors",
                         active
                           ? "bg-accent-soft text-foreground"
                           : "text-muted hover:bg-accent-soft hover:text-foreground",
                       )}
                     >
-                      <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
+                      <Icon
+                        className="h-[18px] w-[18px] shrink-0"
+                        aria-hidden
+                      />
                       {label}
                     </Link>
                   </li>

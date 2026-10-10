@@ -154,3 +154,25 @@ To see the production build locally: `npm run build && npm run start`.
 build the real About Akash page (bio, photo, brokerage details) and the
 Contact page, and polish mobile navigation — all on top of this stage's
 design system. Awaiting your approval to proceed.
+
+---
+
+## Design refresh (2026-10-10, post-Stage-1)
+
+The user disliked the initial look and provided a reference mockup
+(`docs/design-reference.jpg`). The design system was reworked to match its
+language, without changing Stage 1 scope (no new features):
+
+- **Tokens:** warm off-white page bg (#F7F6F2), warm hairline borders,
+  pastel icon chips with toned icon ink (new `--pastel-*-ink` tokens, both
+  themes), dark-teal primary buttons in light / mint in dark.
+- **Homepage:** rebuilt to mirror the reference home screen — bold
+  "Smarter tools for your next move." headline, one-line subtext, stacked
+  tool rows (pastel chip + title + tagline + chevron, 44px+ touch targets),
+  and a "Built by Akash Rahman" card with an AR monogram (never a photo).
+  Removed the gradient hero backdrop and the teaser sections.
+- **Components:** `tool-card.tsx` replaced by `tool-row.tsx`;
+  slimmer `site-header` (h-14, pastel brand chip); restyled
+  `placeholder-page` and `site-footer`. Placeholders stay honest.
+- **Anti-slop rules applied:** 8pt spacing rhythm, real labels only,
+  truncation-safe rows, no decorative gradients, no fake imagery.
