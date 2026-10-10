@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { MonthlyCostCalculator } from "@/components/monthly-cost/monthly-cost-calculator";
 
-export const metadata: Metadata = { title: "True Monthly Cost" };
+export const metadata: Metadata = {
+  title: "True Monthly Cost",
+  description:
+    "Break down the true monthly cost of an NYC home — principal & interest, taxes, insurance, mortgage insurance, and HOA — plus your cash to close, including the mortgage recording tax and mansion tax.",
+};
 
 export default function MonthlyCostPage() {
-  return (
-    <PlaceholderPage
-      title="True Monthly Cost"
-      stage="Stage 4"
-      description="The true monthly cost calculator arrives in Stage 4: principal & interest, property taxes, insurance, mortgage insurance, HOA, and cash to close — with a transparent breakdown."
-    />
-  );
+  return <MonthlyCostCalculator />;
 }
