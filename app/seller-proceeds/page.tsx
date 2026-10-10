@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { SellerProceedsCalculator } from "@/components/seller-proceeds/seller-proceeds-calculator";
 
-export const metadata: Metadata = { title: "Seller Proceeds" };
+export const metadata: Metadata = {
+  title: "Seller Proceeds",
+  description:
+    "Estimate your net proceeds from an NYC sale — the sale price minus mortgage payoffs, broker commission, transfer taxes, and closing costs, shown as an itemized breakdown.",
+};
 
 export default function SellerProceedsPage() {
-  return (
-    <PlaceholderPage
-      title="Seller Proceeds"
-      stage="Stage 5"
-      description="The seller net proceeds calculator arrives in Stage 5: estimated net proceeds with an itemized breakdown of NYC-specific closing costs, transfer taxes, and multiple sale-price scenarios."
-    />
-  );
+  return <SellerProceedsCalculator />;
 }
