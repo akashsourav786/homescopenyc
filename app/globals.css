@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/*
+ * HomeScope NYC design tokens (Stage 1 — Design System)
+ *
+ * Tailwind v4: theme colors are defined as CSS variables on :root / .dark
+ * and mapped into Tailwind utilities via `@theme inline`. Because the
+ * mapping is "inline", utilities like `bg-background` or `text-muted`
+ * resolve to the *variable* (not a baked-in value), so toggling the
+ * `.dark` class on <html> switches the whole palette at runtime.
+ */
+
+/* Class-based dark mode: `dark:` variants respond to `.dark` on <html>,
+   which is set by the theme script before first paint (no flash). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* ---- Light theme ---- */
+  --background: #f7f9fc;
+  --card: #ffffff;
+  --foreground: #14243e; /* primary text */
+  --muted: #5a6b84; /* secondary text — AA contrast on #F7F9FC */
+  --accent: #0f766e; /* primary accent */
+  --accent-foreground: #ffffff;
+  --accent-soft: #ddf4ed; /* pastel mint wash for accent-tinted surfaces */
+  --border: #e2e8f2; /* subtle borders */
+  --ring: #0f766e;
+
+  /* Pastel surfaces (light) */
+  --pastel-blue: #e6f0ff;
+  --pastel-mint: #ddf4ed;
+  --pastel-lavender: #eee8fa;
+  --pastel-peach: #f8ece6;
+
+  color-scheme: light;
+}
+
+.dark {
+  /* ---- Dark theme ---- */
+  --background: #0d1726;
+  --card: #172438;
+  --foreground: #f3f7fc; /* primary text */
+  --muted: #a9b9cd; /* secondary text */
+  --accent: #79e2cf; /* primary accent */
+  --accent-foreground: #0d1726;
+  --accent-soft: #163d39; /* muted mint wash */
+  --border: #26374f;
+  --ring: #79e2cf;
+
+  /* Muted surfaces (dark equivalents of the pastels) */
+  --pastel-blue: #203a58;
+  --pastel-mint: #163d39;
+  --pastel-lavender: #322b4d;
+  --pastel-peach: #4a342c;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-pastel-blue: var(--pastel-blue);
+  --color-pastel-mint: var(--pastel-mint);
+  --color-pastel-lavender: var(--pastel-lavender);
+  --color-pastel-peach: var(--pastel-peach);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessible focus ring for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
