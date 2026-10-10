@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { HomeWorth } from "@/components/home-worth/home-worth";
 
-export const metadata: Metadata = { title: "What's My Home Worth?" };
+export const metadata: Metadata = {
+  title: "What's My Home Worth?",
+  description:
+    "Get a transparent, comp-based value range for your NYC home from recent nearby closed sales. An estimate — never an appraisal.",
+};
 
 export default function HomeWorthPage() {
-  return (
-    <PlaceholderPage
-      title="What's My Home Worth?"
-      stage="Coming soon"
-      description="The home value estimator is coming soon: nearby closed sales, market trends, and a value range — clearly labeled as estimates, never as appraisals."
-    />
-  );
+  return <HomeWorth />;
 }
