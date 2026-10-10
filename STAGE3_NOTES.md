@@ -234,3 +234,33 @@ conservative solve, and the higher-scenario regression band still holds.
 
 **Verification (actually ran):** `npm test` 25/25 ✅ · `npm run lint` 0
 errors ✅ · `npm run build` 12/12 routes prerendered ✅.
+
+### 2026-10-10 — Calculate button + binding explainer (Akash's report)
+
+**Root cause:** NOT a reactivity bug. The form was fully live-reactive
+(all 15 inputs wired, correct memo deps) — but for Akash's scenario the
+front-end DTI solve binds ($688k) while the cash cap allows $769k, so
+changing savings $100k→$200k legitimately leaves the max price unchanged.
+Verified with a scratch test before changing anything. The old
+"Binding constraint: front-end DTI" line was jargon and didn't answer
+"why didn't my number change?"
+
+**Changes** (`components/buying-power/buying-power-calculator.tsx`):
+- Explicit **"Calculate my buying power"** button (dark-teal primary,
+  full-width on mobile) after the form cards. Form edits now update drafts
+  only; results recalculate on tap.
+- Tapping validates first (issues card on bad input), then applies, shows
+  "Last calculated HH:MM", and smooth-scrolls to the results.
+- If drafts differ from the applied inputs, results show
+  "Your inputs changed — tap Calculate below to update these results."
+- Binding constraint surfaced in plain language ("What limits this number?"):
+  cash → more savings raises it; back-end DTI → pay down debts (savings
+  won't help); front-end DTI → income/rate moves it (savings won't help).
+- Scenario toggle stays instant (view switch, not a recalculation).
+
+**Tests:** 28/28 pass (25 existing + 3 new: DTI-bound fixture unchanged by
+savings; cash-bound fixture moves when savings drop; recalculation with new
+inputs yields new outputs).
+
+**Verification (actually ran):** `npm test` 28/28 ✅ · `npm run lint` 0
+errors ✅ · `npm run build` 12/12 routes prerendered ✅.
