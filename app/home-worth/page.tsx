@@ -7,8 +7,8 @@ export default function HomeWorthPage() {
   return (
     <PlaceholderPage
       title="What's My Home Worth?"
-      stage="Stage 7"
-      description="The home value watchlist arrives in Stage 7: nearby closed sales, market updates, and value ranges — clearly labeled as estimates, never as appraisals."
+      stage="Coming soon"
+      description="The home value estimator is coming soon: nearby closed sales, market trends, and a value range — clearly labeled as estimates, never as appraisals."
     />
   );
 }
