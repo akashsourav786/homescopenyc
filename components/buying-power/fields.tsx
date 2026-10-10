@@ -143,7 +143,10 @@ export function SegmentedControl<T extends string>({
       <div
         role="radiogroup"
         aria-label={label}
-        className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-background p-1"
+        className={cn(
+          "grid gap-1 rounded-xl border border-border bg-background p-1",
+          options.length > 2 ? "grid-cols-3" : "grid-cols-2",
+        )}
       >
         {options.map((o) => {
           const active = o.value === value;

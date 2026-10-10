@@ -129,3 +129,63 @@ npm run dev        # → http://localhost:3000/buying-power
 **Stage 4 — True Monthly Cost Calculator:** purchase-price → full monthly
 breakdown (P&I, taxes, insurance, MI, HOA), closing-costs and cash-to-close
 math, reusing this stage's engine. Awaiting approval.
+
+---
+
+## 8. Update 2026-10-10 — post-launch calibration (still Stage 3)
+
+Akash tested the live calculator against a real client file: $130k income,
+10% down ($71k), $6k/yr Bronx taxes, 740+ credit, no debt → lender approved
+**$710k**. The engine's "higher" scenario produced only **$384k**.
+
+**Diagnosis.** The binding constraint was the 28% front-end DTI cap
+($3,033/mo budget). The 28/36 caps are manual-underwriting guidelines; real
+lenders use automated underwriting — Fannie Mae's Desktop Underwriter
+approves up to **50% DTI** with compensating factors (exactly this client's
+profile: 740+ score, zero debt, 10% down). The client's actual approval ran
+at 46.2% DTI ($5,005/mo ÷ $10,833/mo).
+
+**Fix — recalibrated `dtiCaps` (the "higher" scenario) in loan-programs.ts:**
+- Conventional: 28/36 → **45/50** (DU maximums; note that many lenders
+  overlay at 45%). Conservative stays 25/33 — it is the conservative view.
+- FHA: 31/43 → **47/57** (TOTAL Scorecard maximums 46.99/56.99).
+- VA: 41/41 → **45/50** (judgment call: VA has no hard max; 41% is the
+  traditional guideline; AUS approves higher with residual income — the
+  residual-income test itself remains unmodeled, documented in the note).
+- All three programs: `effectiveDate` → 2026-10, notes rewritten to cite the
+  AUS basis and warn about lender overlays.
+- Verified: the same client inputs now produce **$688k** (higher scenario) —
+  right at the real $710k approval. A regression test pins the $650k–$750k
+  band so future cap edits can't silently regress.
+
+**Multifamily + rental income (new feature, Akash-approved design):**
+- Property-type selector: Single-family / 2-unit / 3–4 units.
+- Multifamily reveals a "Monthly rental income from the other unit(s)" field
+  (user-entered); the engine counts **75%** toward qualifying income
+  (`RENTAL_INCOME_HAIRCUT` in loan-programs.ts, sourced to Fannie Mae rental-
+  income guidelines, labeled illustrative — lenders verify with signed leases
+  or an appraisal). DTI budgets and reported DTI ratios use the effective
+  (rental-boosted) qualifying income, which is what lenders do.
+- Unit-count minimum down payments (conventional): 3% / 15% / 25% per
+  conforming LTV limits; FHA 3.5% all; VA 0% all. Encoded per-program as
+  `minDownPctByUnits`, enforced in validation (percent mode) and in the
+  post-solve amount-mode check, with messages naming the requirement.
+- Assumptions panel shows the rental math
+  ("75% × $2,000/mo = $1,500/mo") and the unit-adjusted minimum down.
+- UI: segmented property-type control, conditional rental field with a
+  prominent verification note, a bold multifamily callout at the top of the
+  page, unit-aware program labels ("min 15% down") and down-payment hints.
+  The mortgage-professional disclaimer now also sits **directly under the
+  results** (still duplicated inside the assumptions panel).
+
+**Tests:** 22/22 pass (was 15). New: client-scenario regression ($650k–$750k
+band); rental income raises price; exactly-75% haircut (rent-input ≡ income-
+input equivalence); 3–4 unit + 10% down rejected citing 25%; 2-unit + 15%
+down accepted; zero rent on multifamily ≡ single-family; negative rent
+rejected. Two pre-existing tests needed expectation fixes after the cap
+change (both were test-side, not engine bugs): the sensitivity suite now uses
+$200k savings so the DTI solve (not the cash cap) binds, and the multifamily
+tests use $300k savings for the same reason — documented in the test file.
+
+**Verification (actually ran):** `npm test` 22/22 ✅ · `npm run lint` 0
+errors ✅ · `npm run build` 12/12 routes prerendered ✅.

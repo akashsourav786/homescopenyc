@@ -30,7 +30,12 @@ import {
 } from "@/lib/calculators/buyer-qualification";
 import {
   CREDIT_TIERS,
+  LOAN_PROGRAMS,
   LOAN_PROGRAM_LIST,
+  PROPERTY_TYPES,
+  getMinDownPct,
+  propertyTypeLabel,
+  type PropertyType,
 } from "@/lib/calculators/loan-programs";
 import { NumberField, SelectField, SegmentedControl } from "./fields";
 
@@ -140,6 +145,8 @@ export function BuyingPowerCalculator() {
   const [downAmount, setDownAmount] = useState("60000");
   const [loanProgramId, setLoanProgramId] = useState<LoanProgramId>("conventional");
   const [creditTierId, setCreditTierId] = useState<string>("none");
+  const [propertyType, setPropertyType] = useState<PropertyType>("single");
+  const [monthlyRentalIncome, setMonthlyRentalIncome] = useState("");
   const [annualRatePct, setAnnualRatePct] = useState("6.5");
   const [loanTermYears, setLoanTermYears] = useState("30");
   const [annualPropertyTax, setAnnualPropertyTax] = useState("6000");
@@ -148,6 +155,15 @@ export function BuyingPowerCalculator() {
 
   const [scenario, setScenario] = useState<ScenarioKey>("higher");
   const [assumptionsOpen, setAssumptionsOpen] = useState(false);
+
+  // Minimum down payment for the chosen program + property type
+  // (e.g. conventional needs 15% on 2-units, 25% on 3–4 units).
+  const programForForm = LOAN_PROGRAMS[loanProgramId];
+  const minDownForUnits = getMinDownPct(programForForm, propertyType);
+  const unitDownHint =
+    propertyType === "single"
+      ? undefined
+      : `${programForForm.name} requires at least ${(minDownForUnits * 100).toFixed(1)}% down on ${propertyTypeLabel(propertyType)} properties (illustrative).`;
 
   const outcome = useMemo(() => {
     const inputs: BuyerQualificationInputs = {
@@ -166,12 +182,15 @@ export function BuyingPowerCalculator() {
       annualInsurance: parseOrZero(annualInsurance),
       monthlyHOA: parseOrZero(monthlyHOA),
       closingCostPct: DEFAULT_CLOSING_COST_PCT,
+      propertyType,
+      monthlyRentalIncome: parseOrZero(monthlyRentalIncome),
     };
     return qualifyBuyer(inputs);
   }, [
     annualIncome, monthlyDebts, savings, downMode, downPct, downAmount,
     creditTierId, loanProgramId, annualRatePct, loanTermYears,
-    annualPropertyTax, annualInsurance, monthlyHOA,
+    annualPropertyTax, annualInsurance, monthlyHOA, propertyType,
+    monthlyRentalIncome,
   ]);
 
   const sens = useMemo(() => {
@@ -192,10 +211,12 @@ export function BuyingPowerCalculator() {
       annualInsurance: parseOrZero(annualInsurance),
       monthlyHOA: parseOrZero(monthlyHOA),
       closingCostPct: DEFAULT_CLOSING_COST_PCT,
+      propertyType,
+      monthlyRentalIncome: parseOrZero(monthlyRentalIncome),
     };
     const r = sensitivity(inputs);
     return r.ok ? r : null;
-  }, [outcome.ok, annualIncome, monthlyDebts, savings, downMode, downPct, downAmount, creditTierId, loanProgramId, annualRatePct, loanTermYears, annualPropertyTax, annualInsurance, monthlyHOA]);
+  }, [outcome.ok, annualIncome, monthlyDebts, savings, downMode, downPct, downAmount, creditTierId, loanProgramId, annualRatePct, loanTermYears, annualPropertyTax, annualInsurance, monthlyHOA, propertyType, monthlyRentalIncome]);
 
   const active: QualificationResult | null =
     outcome.ok
@@ -231,6 +252,17 @@ export function BuyingPowerCalculator() {
             </strong>
           </span>
         </p>
+        <div className="mt-3 rounded-xl border border-pastel-mint-ink/30 bg-pastel-mint/50 p-3.5">
+          <p className="text-sm leading-snug">
+            <strong className="font-bold text-foreground">
+              Buying a 2–4 unit home?
+            </strong>{" "}
+            <span className="text-muted">
+              Select multifamily below — 75% of the rental income you enter
+              counts toward your buying power.
+            </span>
+          </p>
+        </div>
       </div>
 
       {/* Validation issues */}
@@ -338,13 +370,39 @@ export function BuyingPowerCalculator() {
                   <span>
                     Binding constraint: <strong className="text-foreground">{active.bindingConstraint}</strong>
                     {" "}— this is what caps the estimate. Rate used:{" "}
-                    {active.effectiveRatePct.toFixed(2)}%.
+                    {active.effectiveRatePct.toFixed(2)}%. Qualifying income:{" "}
+                    {usd0.format(active.effectiveMonthlyIncome)}/mo
+                    {active.rentalIncomeCounted > 0 && (
+                      <>
+                        {" "}(includes {usd0.format(active.rentalIncomeCounted)}{" "}
+                        counted rent)
+                      </>
+                    )}
+                    .
                   </span>
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Visible disclaimer — reads without opening the assumptions panel.
+          A second copy lives inside the panel (belt and suspenders). */}
+      {outcome.ok && active && (
+        <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-border bg-card p-4">
+          <Info
+            className="mt-0.5 size-4 shrink-0 text-muted"
+            aria-hidden
+          />
+          <p className="text-[13px] leading-snug text-muted">
+            <strong className="font-semibold text-foreground">
+              Estimates only — not a loan approval or preapproval.
+            </strong>{" "}
+            Real qualification depends on a lender&apos;s full underwriting.
+            Consult a licensed mortgage professional before making decisions.
+          </p>
+        </div>
       )}
 
       {/* Form */}
@@ -395,6 +453,30 @@ export function BuyingPowerCalculator() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
+              <SegmentedControl<PropertyType>
+                label="Property type"
+                value={propertyType}
+                onChange={setPropertyType}
+                options={PROPERTY_TYPES.map((p) => ({
+                  value: p.id,
+                  label: p.label,
+                }))}
+              />
+            </div>
+            {propertyType !== "single" && (
+              <div className="sm:col-span-2">
+                <NumberField
+                  id="rental-income"
+                  label="Monthly rental income from the other unit(s)"
+                  value={monthlyRentalIncome}
+                  onChange={setMonthlyRentalIncome}
+                  prefix="$"
+                  placeholder="2,000"
+                  hint="Your estimate — 75% counts toward qualifying income. Lenders verify with signed leases or an appraisal."
+                />
+              </div>
+            )}
+            <div className="sm:col-span-2">
               <SegmentedControl<"percent" | "amount">
                 label="Down payment input"
                 value={downMode}
@@ -413,6 +495,7 @@ export function BuyingPowerCalculator() {
                 onChange={setDownPct}
                 suffix="%"
                 placeholder="10"
+                hint={unitDownHint}
               />
             ) : (
               <NumberField
@@ -422,6 +505,7 @@ export function BuyingPowerCalculator() {
                 onChange={setDownAmount}
                 prefix="$"
                 placeholder="60,000"
+                hint={unitDownHint}
               />
             )}
             <SelectField<LoanProgramId>
@@ -431,7 +515,7 @@ export function BuyingPowerCalculator() {
               onChange={setLoanProgramId}
               options={LOAN_PROGRAM_LIST.map((p) => ({
                 value: p.id,
-                label: `${p.name} (min ${(p.minDownPct * 100).toFixed(1)}% down)`,
+                label: `${p.name} (min ${(getMinDownPct(p, propertyType) * 100).toFixed(1)}% down)`,
               }))}
             />
             <SelectField<string>
