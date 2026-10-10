@@ -380,3 +380,65 @@ describe("sensitivity", () => {
     expect(out.ok).toBe(false);
   });
 });
+
+describe("binding constraint drives which inputs matter", () => {
+  const clientFixture = () =>
+    baseInputs({
+      annualIncome: 130000,
+      monthlyDebts: 0,
+      savings: 100000,
+      downPayment: { mode: "percent", pct: 10 },
+      annualPropertyTax: 6000,
+      annualInsurance: 2400,
+    });
+
+  it("client fixture binds on front-end DTI, so changing savings does not move the price", () => {
+    const out = qualifyBuyer(clientFixture());
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.value.higher.bindingConstraint).toBe("front-end DTI");
+    expect(out.value.conservative.bindingConstraint).toBe("front-end DTI");
+
+    const richer = qualifyBuyer({ ...clientFixture(), savings: 200000 });
+    expect(richer.ok).toBe(true);
+    if (!richer.ok) return;
+    expect(richer.value.higher.maxPrice).toBe(out.value.higher.maxPrice);
+  });
+
+  it("savings changes DO move the price when cash is the binding constraint", () => {
+    // High income (DTI won't bind) + small savings (cash cap binds).
+    const cashStrapped = () =>
+      baseInputs({
+        annualIncome: 300000,
+        monthlyDebts: 0,
+        savings: 50000,
+        downPayment: { mode: "percent", pct: 10 },
+      });
+    const out = qualifyBuyer(cashStrapped());
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.value.higher.bindingConstraint).toBe("cash available");
+
+    const poorer = qualifyBuyer({
+      ...cashStrapped(),
+      savings: 30000,
+    });
+    expect(poorer.ok).toBe(true);
+    if (!poorer.ok) return;
+    expect(poorer.value.higher.bindingConstraint).toBe("cash available");
+    expect(poorer.value.higher.maxPrice).toBeLessThan(
+      out.value.higher.maxPrice,
+    );
+  });
+
+  it("recalculating with new inputs yields new outputs (no stale results)", () => {
+    const before = qualifyBuyer(baseInputs({ annualIncome: 150000 }));
+    const after = qualifyBuyer(baseInputs({ annualIncome: 300000 }));
+    expect(before.ok && after.ok).toBe(true);
+    if (!before.ok || !after.ok) return;
+    // Doubling income must move the DTI-bound max price.
+    expect(after.value.higher.maxPrice).toBeGreaterThan(
+      before.value.higher.maxPrice,
+    );
+  });
+});
