@@ -54,7 +54,8 @@ export class PropertyDataError extends Error {
   }
 }
 
-async function fetchJson(url: string): Promise<unknown> {
+/** @internal — exported for the home-worth module and tests. */
+export async function fetchJson(url: string): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   let res: Response;
