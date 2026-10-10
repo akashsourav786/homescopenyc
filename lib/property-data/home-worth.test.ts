@@ -8,7 +8,6 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  COMP_LOOKBACK_DAYS,
   MIN_COMPS,
   classLetter,
   classLetterLabel,
@@ -334,13 +333,10 @@ describe("getComparableSales", () => {
 });
 
 describe("lookbackIso", () => {
-  it("returns an ISO date ~365 days before now", () => {
+  it("returns a date-only string ~365 days before now (calendar_date-safe)", () => {
     const now = new Date("2026-10-10T12:00:00.000Z").getTime();
     const iso = lookbackIso(now);
-    expect(iso.startsWith("2025-10-10")).toBe(true);
-    expect(new Date(iso).getTime()).toBe(
-      now - COMP_LOOKBACK_DAYS * 24 * 3600 * 1000,
-    );
+    expect(iso).toBe("2025-10-10");
   });
 });
 
