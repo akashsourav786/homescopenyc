@@ -56,7 +56,7 @@ export const TOOLS: ToolDef[] = [
     icon: Calculator,
     tile: "bg-pastel-blue",
     ink: "text-pastel-blue-ink",
-    stage: "Stage 3",
+    stage: "Live",
   },
   {
     title: "True Monthly Cost",
