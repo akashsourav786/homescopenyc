@@ -15,7 +15,7 @@
  *    closing-cost model — mortgage recording tax (borrower-paid portion),
  *    mansion tax, title insurance, attorney fee, plus an illustrative
  *    lender & third-party fees (misc.) allowance calibrated so total buyer
- *    closing costs land at ≈2.5% of price.
+ *    closing costs land at ≈3.5% of price.
  *
  * ## NYC closing-cost model
  *
@@ -185,12 +185,13 @@ export const ATTORNEY_FEE_RANGE = "$2,000–$5,000";
 /**
  * Illustrative benchmark: total buyer closing costs target this fraction of
  * the purchase price. NYC buyer closing costs are commonly cited at 2–5% of
- * price (condo/house); this model targets the low end. A "misc" lender &
+ * price (condo/house); this model targets 3.5% as a realistic all-in estimate
+ * that leaves room for lender & third-party fees. A "misc" lender &
  * third-party fees line fills the gap between the modeled tax/title/attorney
  * lines and this benchmark — it is $0 when those lines already meet or
- * exceed it (e.g., mansion-tax cases). Labeled illustrative everywhere.
+ * exceed it (e.g., high mansion-tax cases). Labeled illustrative everywhere.
  */
-export const MISC_CLOSING_TARGET_PCT = 0.025;
+export const MISC_CLOSING_TARGET_PCT = 0.035;
 
 /* ------------------------------------------------------------------ */
 /* Validation                                                          */
@@ -399,7 +400,7 @@ export function calculateMonthlyCost(
   // underwriting/processing, appraisal, credit & flood reports — plus the home
   // inspection. Note: inspection and appraisal are typically paid out of
   // pocket BEFORE closing day, but they are still buyer costs. Calibrated so
-  // total buyer closing costs land at ≈2.5% of price (MISC_CLOSING_TARGET_PCT);
+  // total buyer closing costs land at ≈3.5% of price (MISC_CLOSING_TARGET_PCT);
   // $0 when the modeled lines already meet or exceed the benchmark.
   const miscAmount = round2(
     Math.max(
@@ -447,7 +448,7 @@ export function calculateMonthlyCost(
             label: "Lender & third-party fees (misc., illustrative)",
             amount: miscAmount,
             source:
-              "Illustrative allowance for lender origination/underwriting/processing, appraisal, and credit/flood reports, plus the home inspection — inspection and appraisal are typically paid out of pocket BEFORE closing day. Calibrated so total buyer closing costs ≈ 2.5% of price, a commonly cited NYC benchmark; actual fees vary by lender.",
+              "Illustrative allowance for lender origination/underwriting/processing, appraisal, and credit/flood reports, plus the home inspection — inspection and appraisal are typically paid out of pocket BEFORE closing day. Calibrated so total buyer closing costs ≈ 3.5% of price, a realistic all-in NYC estimate; actual fees vary by lender.",
             illustrative: true,
           } as ClosingCostLine,
         ]
@@ -475,7 +476,7 @@ export function calculateMonthlyCost(
       ? "No mansion tax below $1M."
       : undefined,
     miscAmount === 0
-      ? "Closing costs already meet or exceed the illustrative 2.5%-of-price benchmark, so no misc. lender & third-party fee allowance was added."
+      ? "Closing costs already meet or exceed the illustrative 3.5%-of-price benchmark, so no misc. lender & third-party fee allowance was added."
       : undefined,
     "Closing-cost model assumes a condo/house purchase: co-op share loans record no real-property mortgage (no mortgage recording tax; UCC-1 filing instead).",
     "Co-op flip tax is building-specific and EXCLUDED from this estimate.",
