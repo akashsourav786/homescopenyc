@@ -52,7 +52,7 @@ const inputClass =
   "h-11 w-full rounded-xl border border-border bg-card px-3.5 text-[15px] text-foreground " +
   "placeholder:text-muted/60 focus:outline-2 focus:outline-offset-1 focus:outline-ring";
 
-function AddressField({
+export function AddressField({
   id,
   label,
   value,
@@ -95,7 +95,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LoadingSkeleton() {
+export function LoadingSkeleton() {
   return (
     <Card aria-busy="true" aria-label="Loading property data">
       <CardContent className="space-y-3 p-6">
@@ -114,7 +114,7 @@ function LoadingSkeleton() {
   );
 }
 
-function StatusMessage({
+export function StatusMessage({
   title,
   body,
   onRetry,
