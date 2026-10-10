@@ -171,6 +171,50 @@ describe("calculateMonthlyCost", () => {
     expect(out.value.mansionTaxRate).toBeNull();
   });
 
+  it("misc lender-fee line fills closing costs to 2.5% of price", () => {
+    // $800k price, 50% down: $400k loan → 1.8% recording tax = $7,200;
+    // title 0.45% = $3,600; attorney $3,500 → $14,300 modeled.
+    // 2.5% of $800k = $20,000 → misc plug = $5,700; total exactly $20,000.
+    const out = calculateMonthlyCost(
+      baseInputs({
+        purchasePrice: 800000,
+        downPayment: { mode: "percent", pct: 50 },
+      }),
+    );
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    const r = out.value;
+    const misc = r.closingCosts.find((l) =>
+      l.label.startsWith("Lender & third-party fees"),
+    );
+    expect(misc).toBeDefined();
+    expect(misc!.amount).toBeCloseTo(5700, 1);
+    expect(misc!.illustrative).toBe(true);
+    expect(r.closingCostsTotal).toBeCloseTo(20000, 1);
+    expect(r.closingCostsTotal / r.purchasePrice).toBeCloseTo(0.025, 4);
+  });
+
+  it("omits the misc line when modeled costs already exceed 2.5% of price", () => {
+    const out = calculateMonthlyCost(
+      baseInputs({
+        purchasePrice: 1200000,
+        downPayment: { mode: "percent", pct: 10 },
+      }),
+    );
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(
+      out.value.closingCosts.some((l) =>
+        l.label.startsWith("Lender & third-party fees"),
+      ),
+    ).toBe(false);
+    // Totals unchanged: $41,690 modeled costs, no plug added.
+    expect(out.value.closingCostsTotal).toBeCloseTo(41690, 1);
+    expect(
+      out.value.assumptions.some((s) => s.includes("no misc. lender")),
+    ).toBe(true);
+  });
+
   it("cash-to-close equals down payment plus the closing-cost lines", () => {
     const out = calculateMonthlyCost(
       baseInputs({ downPayment: { mode: "amount", amount: 60000 } }),
