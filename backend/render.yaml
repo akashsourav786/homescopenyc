@@ -1,0 +1,10 @@
+# Render.com deploy sketch (docs only).
+# Akash connects his own Render account later: dashboard → New → Web Service →
+# point at this repo, Root Directory = "backend". The service is stateless and
+# needs no environment variables.
+services:
+  - type: web
+    name: homescope-nyc-api
+    runtime: docker
+    rootDir: backend
+    healthCheckPath: /health
