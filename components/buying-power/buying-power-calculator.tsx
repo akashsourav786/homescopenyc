@@ -4,9 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
+  ArrowRight,
   ChevronDown,
   Info,
-  MessageCircle,
+  MapPin,
   ShieldCheck,
   Wallet,
 } from "lucide-react";
@@ -387,6 +388,39 @@ export function BuyingPowerCalculator() {
         </Card>
       )}
 
+      {/* Contact CTA — directly under results, before toggles/inputs. */}
+      {outcome.ok && (
+        <Card className="mb-6 border-accent/30 bg-accent-soft">
+          <CardContent className="flex flex-col items-start gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-foreground">
+                Want a better understanding of these numbers?
+              </p>
+              <p className="text-sm text-muted">
+                Walk through your scenario with a local expert.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/contact">
+                Contact Akash <ArrowRight aria-hidden />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* NYC area-variance note — always visible, not collapsible. */}
+      {outcome.ok && (
+        <p className="mb-6 flex items-start gap-1.5 text-[13px] text-muted">
+          <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            Estimates can vary by neighborhood — property taxes, insurance
+            costs, and HOA/maintenance fees differ across NYC boroughs and
+            surrounding areas. The figures above use the values you entered.
+          </span>
+        </p>
+      )}
+
       {/* Visible disclaimer — reads without opening the assumptions panel.
           A second copy lives inside the panel (belt and suspenders). */}
       {outcome.ok && active && (
@@ -680,25 +714,6 @@ export function BuyingPowerCalculator() {
         </Card>
       )}
 
-      {/* CTA */}
-      <Card className="mt-6 border-accent/30 bg-accent-soft">
-        <CardContent className="flex flex-col items-start gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="font-semibold text-foreground">
-              Questions about your buying power?
-            </p>
-            <p className="text-sm text-muted">
-              Talk it through with a local agent who built the math.
-            </p>
-          </div>
-          <Button asChild>
-            <Link href="/contact">
-              <MessageCircle aria-hidden />
-              Talk to Akash about your options
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
     </Container>
   );
 }
