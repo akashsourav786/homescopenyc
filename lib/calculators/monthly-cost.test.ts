@@ -156,9 +156,14 @@ describe("calculateMonthlyCost", () => {
     );
     // Attorney: illustrative flat fee.
     expect(lines["Attorney fee (illustrative)"]).toBe(ATTORNEY_FEE);
-    // $120k down + $20,790 + $12,000 + $5,400 + $3,500 = $161,690.
-    expect(r.cashToClose).toBeCloseTo(161690, 1);
-    expect(r.closingCostsTotal).toBeCloseTo(41690, 1);
+    // 3.5% of $1.2M = $42,000 target; modeled $41,690 → misc plug $310.
+    expect(lines["Lender & third-party fees (misc., illustrative)"]).toBeCloseTo(
+      310,
+      1,
+    );
+    // $120k down + $20,790 + $12,000 + $5,400 + $3,500 + $310 = $162,000.
+    expect(r.cashToClose).toBeCloseTo(162000, 1);
+    expect(r.closingCostsTotal).toBeCloseTo(42000, 1);
   });
 
   it("omits the mansion-tax line below $1M", () => {
@@ -171,10 +176,10 @@ describe("calculateMonthlyCost", () => {
     expect(out.value.mansionTaxRate).toBeNull();
   });
 
-  it("misc lender-fee line fills closing costs to 2.5% of price", () => {
+  it("misc lender-fee line fills closing costs to 3.5% of price", () => {
     // $800k price, 50% down: $400k loan → 1.8% recording tax = $7,200;
     // title 0.45% = $3,600; attorney $3,500 → $14,300 modeled.
-    // 2.5% of $800k = $20,000 → misc plug = $5,700; total exactly $20,000.
+    // 3.5% of $800k = $28,000 → misc plug = $13,700; total exactly $28,000.
     const out = calculateMonthlyCost(
       baseInputs({
         purchasePrice: 800000,
@@ -188,16 +193,19 @@ describe("calculateMonthlyCost", () => {
       l.label.startsWith("Lender & third-party fees"),
     );
     expect(misc).toBeDefined();
-    expect(misc!.amount).toBeCloseTo(5700, 1);
+    expect(misc!.amount).toBeCloseTo(13700, 1);
     expect(misc!.illustrative).toBe(true);
-    expect(r.closingCostsTotal).toBeCloseTo(20000, 1);
-    expect(r.closingCostsTotal / r.purchasePrice).toBeCloseTo(0.025, 4);
+    expect(r.closingCostsTotal).toBeCloseTo(28000, 1);
+    expect(r.closingCostsTotal / r.purchasePrice).toBeCloseTo(0.035, 4);
   });
 
-  it("omits the misc line when modeled costs already exceed 2.5% of price", () => {
+  it("omits the misc line when modeled costs already exceed 3.5% of price", () => {
+    // $2.5M price, 10% down: $2.25M loan → 1.925% recording = $43,312.50;
+    // mansion 1.25% = $31,250; title 0.45% = $11,250; attorney $3,500 →
+    // $89,312.50 = 3.57% > 3.5% benchmark → misc $0, line omitted.
     const out = calculateMonthlyCost(
       baseInputs({
-        purchasePrice: 1200000,
+        purchasePrice: 2500000,
         downPayment: { mode: "percent", pct: 10 },
       }),
     );
@@ -208,8 +216,7 @@ describe("calculateMonthlyCost", () => {
         l.label.startsWith("Lender & third-party fees"),
       ),
     ).toBe(false);
-    // Totals unchanged: $41,690 modeled costs, no plug added.
-    expect(out.value.closingCostsTotal).toBeCloseTo(41690, 1);
+    expect(out.value.closingCostsTotal).toBeCloseTo(89312.5, 1);
     expect(
       out.value.assumptions.some((s) => s.includes("no misc. lender")),
     ).toBe(true);
