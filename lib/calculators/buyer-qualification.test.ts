@@ -189,6 +189,60 @@ describe("qualifyBuyer", () => {
     expect(out.value.higher.maxPrice).toBeGreaterThanOrEqual(650000);
     expect(out.value.higher.maxPrice).toBeLessThanOrEqual(750000);
   });
+
+  it("conservative scenario lands near $474k for the client fixture (33% front-end binding)", () => {
+    // Same client inputs, conservative caps (33/43): front-end binds at
+    // $10,833 × 33% = $3,575/mo → ≈ $474k. Tight band keeps the two
+    // scenarios usefully close instead of confusingly far apart.
+    const out = qualifyBuyer(
+      baseInputs({
+        annualIncome: 130000,
+        monthlyDebts: 0,
+        savings: 100000,
+        downPayment: { mode: "percent", pct: 10 },
+        creditTierId: "excellent",
+        annualPropertyTax: 6000,
+        annualInsurance: 2400,
+      }),
+    );
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.value.conservative.maxPrice).toBeGreaterThanOrEqual(472000);
+    expect(out.value.conservative.maxPrice).toBeLessThanOrEqual(476000);
+    expect(out.value.conservative.bindingConstraint).toBe("front-end DTI");
+  });
+
+  it("conservative and higher use the same effective rate (no cushion)", () => {
+    const out = qualifyBuyer(baseInputs({ creditTierId: "good" }));
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    // Both scenarios price the same loan: 6.5% base + 0.25% tier = 6.75%.
+    expect(out.value.conservative.effectiveRatePct).toBe(6.75);
+    expect(out.value.higher.effectiveRatePct).toBe(6.75);
+  });
+
+  it("assumptions cite the DTI cap sources for each program", () => {
+    const conventional = qualifyBuyer(baseInputs({ loanProgramId: "conventional" }));
+    expect(conventional.ok).toBe(true);
+    if (conventional.ok) {
+      const text = [
+        ...conventional.value.conservative.assumptions,
+        ...conventional.value.higher.assumptions,
+      ].join(" ");
+      expect(text).toContain("B3-6-02");
+    }
+    const fha = qualifyBuyer(
+      baseInputs({ loanProgramId: "fha", downPayment: { mode: "percent", pct: 10 } }),
+    );
+    expect(fha.ok).toBe(true);
+    if (fha.ok) {
+      const text = [
+        ...fha.value.conservative.assumptions,
+        ...fha.value.higher.assumptions,
+      ].join(" ");
+      expect(text).toContain("4000.1");
+    }
+  });
 });
 
 describe("multifamily + rental income", () => {
