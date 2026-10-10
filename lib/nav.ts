@@ -67,7 +67,7 @@ export const TOOLS: ToolDef[] = [
     icon: BadgeDollarSign,
     tile: "bg-pastel-mint",
     ink: "text-pastel-mint-ink",
-    stage: "Stage 4",
+    stage: "Live",
   },
   {
     title: "Property Insights",
@@ -100,7 +100,7 @@ export const TOOLS: ToolDef[] = [
     icon: HandCoins,
     tile: "bg-pastel-mint",
     ink: "text-pastel-mint-ink",
-    stage: "Stage 5",
+    stage: "Live",
   },
   {
     title: "Compare Homes",
