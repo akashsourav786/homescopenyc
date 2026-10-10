@@ -87,7 +87,7 @@ export const TOOLS: ToolDef[] = [
     icon: LineChart,
     tile: "bg-pastel-peach",
     ink: "text-pastel-peach-ink",
-    stage: "Stage 7",
+    stage: "Live",
   },
   {
     title: "Seller Proceeds",
