@@ -1,7 +1,6 @@
 import {
   ArrowLeftRight,
   BadgeDollarSign,
-  BookmarkCheck,
   Building2,
   Calculator,
   HandCoins,
@@ -26,7 +25,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Property Insights", href: "/property-insights", icon: Building2 },
   { label: "What's My Home Worth?", href: "/home-worth", icon: LineChart },
   { label: "Seller Proceeds", href: "/seller-proceeds", icon: HandCoins },
-  { label: "Saved Reports", href: "/saved-reports", icon: BookmarkCheck },
   { label: "About Akash", href: "/about", icon: Info },
   { label: "Contact Akash", href: "/contact", icon: Mail },
 ];
