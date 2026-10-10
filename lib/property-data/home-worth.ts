@@ -249,9 +249,13 @@ export async function getComparableSales(
   return data as Record<string, unknown>[];
 }
 
-/** ISO timestamp for the comp lookback window (testable seam). */
+/** Date-only (YYYY-MM-DD) lookback for the comp window (testable seam).
+ * Date-only because the DOF `sale_date` column is a calendar_date — a full
+ * ISO timestamp literal causes a SoQL type-mismatch (HTTP 400). */
 export function lookbackIso(nowMs: number = Date.now()): string {
-  return new Date(nowMs - COMP_LOOKBACK_DAYS * 24 * 3600 * 1000).toISOString();
+  return new Date(nowMs - COMP_LOOKBACK_DAYS * 24 * 3600 * 1000)
+    .toISOString()
+    .slice(0, 10);
 }
 
 /**
