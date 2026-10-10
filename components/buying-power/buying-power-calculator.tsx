@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
   ArrowRight,
+  Calculator,
   ChevronDown,
   Info,
   MapPin,
@@ -28,6 +29,7 @@ import {
   type BuyerQualificationInputs,
   type LoanProgramId,
   type QualificationResult,
+  type ValidationIssue,
 } from "@/lib/calculators/buyer-qualification";
 import {
   CREDIT_TIERS,
@@ -134,6 +136,20 @@ function DtiBar({ label, value, cap }: { label: string; value: number; cap: numb
 /* Calculator                                                          */
 /* ------------------------------------------------------------------ */
 
+/** Plain-language explanation of which input caps the estimate. */
+function bindingExplainer(
+  constraint: QualificationResult["bindingConstraint"],
+): string {
+  switch (constraint) {
+    case "cash available":
+      return "The cash you have available — more savings (or a smaller down payment) would raise this number.";
+    case "back-end DTI":
+      return "Your total monthly debts compared to your income — paying down debts would raise this number; adding savings won't.";
+    default:
+      return "How much of your income can go to housing — higher income or a lower rate would raise this number; adding savings won't.";
+  }
+}
+
 type ScenarioKey = "conservative" | "higher";
 
 export function BuyingPowerCalculator() {
@@ -166,37 +182,17 @@ export function BuyingPowerCalculator() {
       ? undefined
       : `${programForForm.name} requires at least ${(minDownForUnits * 100).toFixed(1)}% down on ${propertyTypeLabel(propertyType)} properties (illustrative).`;
 
-  const outcome = useMemo(() => {
-    const inputs: BuyerQualificationInputs = {
-      annualIncome: parseNum(annualIncome),
-      monthlyDebts: parseOrZero(monthlyDebts),
-      savings: parseOrZero(savings),
-      downPayment:
-        downMode === "percent"
-          ? { mode: "percent", pct: parseNum(downPct) }
-          : { mode: "amount", amount: parseOrZero(downAmount) },
-      creditTierId: creditTierId === "none" ? undefined : creditTierId,
-      loanProgramId,
-      annualRatePct: parseNum(annualRatePct),
-      loanTermYears: parseInt(loanTermYears, 10),
-      annualPropertyTax: parseOrZero(annualPropertyTax),
-      annualInsurance: parseOrZero(annualInsurance),
-      monthlyHOA: parseOrZero(monthlyHOA),
-      closingCostPct: DEFAULT_CLOSING_COST_PCT,
-      propertyType,
-      monthlyRentalIncome: parseOrZero(monthlyRentalIncome),
-    };
-    return qualifyBuyer(inputs);
-  }, [
+  // ---- draft → applied: the form edits drafts; results only recalculate
+  // when the user taps Calculate. ----
+  const draftFields = [
     annualIncome, monthlyDebts, savings, downMode, downPct, downAmount,
     creditTierId, loanProgramId, annualRatePct, loanTermYears,
     annualPropertyTax, annualInsurance, monthlyHOA, propertyType,
     monthlyRentalIncome,
-  ]);
+  ];
 
-  const sens = useMemo(() => {
-    if (!outcome.ok) return null;
-    const inputs: BuyerQualificationInputs = {
+  function buildInputs(): BuyerQualificationInputs {
+    return {
       annualIncome: parseNum(annualIncome),
       monthlyDebts: parseOrZero(monthlyDebts),
       savings: parseOrZero(savings),
@@ -215,9 +211,46 @@ export function BuyingPowerCalculator() {
       propertyType,
       monthlyRentalIncome: parseOrZero(monthlyRentalIncome),
     };
-    const r = sensitivity(inputs);
+  }
+
+  const [appliedInputs, setAppliedInputs] = useState<BuyerQualificationInputs>(
+    () => buildInputs(),
+  );
+  const [appliedSnapshot, setAppliedSnapshot] = useState(() =>
+    draftFields.join("|"),
+  );
+  const [issues, setIssues] = useState<ValidationIssue[]>([]);
+  const [calculatedAt, setCalculatedAt] = useState<Date | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const inputsDirty = draftFields.join("|") !== appliedSnapshot;
+
+  function handleCalculate() {
+    const inputs = buildInputs();
+    const check = qualifyBuyer(inputs);
+    if (!check.ok) {
+      setIssues(check.issues);
+      return;
+    }
+    setIssues([]);
+    setAppliedInputs(inputs);
+    setAppliedSnapshot(draftFields.join("|"));
+    setCalculatedAt(new Date());
+    requestAnimationFrame(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  const outcome = useMemo(
+    () => qualifyBuyer(appliedInputs),
+    [appliedInputs],
+  );
+
+  const sens = useMemo(() => {
+    if (!outcome.ok) return null;
+    const r = sensitivity(appliedInputs);
     return r.ok ? r : null;
-  }, [outcome.ok, annualIncome, monthlyDebts, savings, downMode, downPct, downAmount, creditTierId, loanProgramId, annualRatePct, loanTermYears, annualPropertyTax, annualInsurance, monthlyHOA, propertyType, monthlyRentalIncome]);
+  }, [outcome.ok, appliedInputs]);
 
   const active: QualificationResult | null =
     outcome.ok
@@ -266,17 +299,17 @@ export function BuyingPowerCalculator() {
         </div>
       </div>
 
-      {/* Validation issues */}
-      {!outcome.ok && (
+      {/* Validation issues (from the last Calculate tap) */}
+      {issues.length > 0 && (
         <Card className="mb-6 border-pastel-peach-ink/40 bg-pastel-peach/40">
           <CardContent className="flex gap-3 p-5">
             <AlertCircle className="size-5 shrink-0 text-pastel-peach-ink" aria-hidden />
             <div>
               <p className="text-sm font-semibold text-foreground">
-                Check these inputs
+                Check these inputs, then tap Calculate again
               </p>
               <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-muted">
-                {outcome.issues.map((i) => (
+                {issues.map((i) => (
                   <li key={i.code}>{i.message}</li>
                 ))}
               </ul>
@@ -287,6 +320,7 @@ export function BuyingPowerCalculator() {
 
       {/* Results hero */}
       {outcome.ok && (
+        <div ref={resultsRef} className="scroll-mt-4">
         <Card className="mb-6 overflow-hidden">
           <div className="bg-accent-soft px-6 pb-6 pt-6">
             <p className="text-[13px] font-semibold uppercase tracking-wider text-muted">
@@ -297,6 +331,21 @@ export function BuyingPowerCalculator() {
               <span className="text-muted"> – </span>
               {usd0.format(outcome.value.higher.maxPrice)}
             </p>
+            {inputsDirty ? (
+              <p className="mt-2 text-[13px] font-semibold text-pastel-peach-ink">
+                Your inputs changed — tap Calculate below to update these
+                results.
+              </p>
+            ) : calculatedAt ? (
+              <p className="mt-2 text-[13px] text-muted">
+                Last calculated{" "}
+                {calculatedAt.toLocaleTimeString([], {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}{" "}
+                with your current inputs.
+              </p>
+            ) : null}
             <p className="mt-2 text-[13px] text-muted">
               Conservative to higher qualification scenarios. Your information
               stays on this device — nothing is sent anywhere.
@@ -369,23 +418,28 @@ export function BuyingPowerCalculator() {
                 <p className="mt-4 flex items-start gap-1.5 text-[13px] text-muted">
                   <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
                   <span>
-                    Binding constraint: <strong className="text-foreground">{active.bindingConstraint}</strong>
-                    {" "}— this is what caps the estimate. Rate used:{" "}
-                    {active.effectiveRatePct.toFixed(2)}%. Qualifying income:{" "}
-                    {usd0.format(active.effectiveMonthlyIncome)}/mo
-                    {active.rentalIncomeCounted > 0 && (
-                      <>
-                        {" "}(includes {usd0.format(active.rentalIncomeCounted)}{" "}
-                        counted rent)
-                      </>
-                    )}
-                    .
+                    <strong className="font-semibold text-foreground">
+                      What limits this number?{" "}
+                    </strong>
+                    {bindingExplainer(active.bindingConstraint)}
                   </span>
+                </p>
+                <p className="mt-2 text-[13px] text-muted">
+                  Rate used: {active.effectiveRatePct.toFixed(2)}%. Qualifying
+                  income: {usd0.format(active.effectiveMonthlyIncome)}/mo
+                  {active.rentalIncomeCounted > 0 && (
+                    <>
+                      {" "}(includes {usd0.format(active.rentalIncomeCounted)}{" "}
+                      counted rent)
+                    </>
+                  )}
+                  .
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
+        </div>
       )}
 
       {/* Contact CTA — directly under results, before toggles/inputs. */}
@@ -619,6 +673,22 @@ export function BuyingPowerCalculator() {
             />
           </CardContent>
         </Card>
+      </div>
+
+      {/* Calculate — applies the current form values */}
+      <div className="mt-6">
+        <Button
+          type="button"
+          size="lg"
+          onClick={handleCalculate}
+          className="w-full sm:w-auto sm:min-w-64"
+        >
+          <Calculator aria-hidden />
+          Calculate my buying power
+        </Button>
+        <p className="mt-2 text-[13px] text-muted">
+          Runs the numbers with everything you entered above.
+        </p>
       </div>
 
       {/* What-if sensitivity */}
