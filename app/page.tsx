@@ -1,12 +1,15 @@
+import Link from "next/link";
+import { ArrowRight, MessageCircle } from "lucide-react";
 import { Container } from "@/components/container";
 import { Card } from "@/components/ui/card";
+import { CreatorPhoto } from "@/components/creator-photo";
 import { ToolRow } from "@/components/tool-row";
 import { TOOLS } from "@/lib/nav";
 
 /**
  * Homepage — mirrors the approved reference home screen:
- * bold headline, short subtext, stacked tool rows, and a
- * "Built by" card with an AR monogram (never a fake photo).
+ * bold headline, short subtext, stacked tool rows, a "Built by" card
+ * (links to /about), and a contact call-to-action (links to /contact).
  *
  * Still Stage 1 scope: every tool links to its labeled placeholder route.
  */
@@ -37,26 +40,53 @@ export default function HomePage() {
         </ul>
       </section>
 
-      {/* ---------- Built by ---------- */}
-      <section aria-label="About the creator" className="mt-6 pb-12 sm:pb-16">
-        <Card className="flex items-center gap-4 p-5">
-          <span
-            aria-hidden
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-pastel-lavender text-lg font-bold text-pastel-lavender-ink"
-          >
-            AR
+      {/* ---------- Built by → /about ---------- */}
+      <section aria-label="About the creator" className="mt-6">
+        <Link
+          href="/about"
+          className="group block rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <Card className="flex items-center gap-4 p-5 transition-colors group-hover:bg-accent-soft/40">
+            <CreatorPhoto className="h-14 w-14 text-lg" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+                Built by
+              </p>
+              <p className="mt-0.5 text-[15px] font-bold tracking-tight">
+                Akash Rahman
+              </p>
+              <p className="mt-0.5 text-[13px] leading-snug text-muted">
+                NY Licensed Real Estate Salesperson · EXIT Realty DKC
+              </p>
+            </div>
+            <ArrowRight
+              className="h-5 w-5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+              aria-hidden
+            />
+          </Card>
+        </Link>
+      </section>
+
+      {/* ---------- Contact CTA → /contact ---------- */}
+      <section aria-label="Contact" className="mt-3 pb-12 sm:pb-16">
+        <Card className="flex items-center gap-4 bg-accent-soft p-5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <MessageCircle className="h-5 w-5" aria-hidden />
           </span>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-              Built by
-            </p>
-            <p className="mt-0.5 text-[15px] font-bold tracking-tight">
-              Akash Rahman
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-bold tracking-tight">
+              Questions about buying or selling in NYC?
             </p>
             <p className="mt-0.5 text-[13px] leading-snug text-muted">
-              NY Licensed Real Estate Salesperson · EXIT Realty DKC
+              Talk it through with the agent who built this.
             </p>
           </div>
+          <Link
+            href="/contact"
+            className="shrink-0 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
+          >
+            Contact Akash
+          </Link>
         </Card>
       </section>
     </Container>
