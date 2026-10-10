@@ -78,7 +78,7 @@ export const TOOLS: ToolDef[] = [
     icon: Building2,
     tile: "bg-pastel-lavender",
     ink: "text-pastel-lavender-ink",
-    stage: "Stage 6",
+    stage: "Live",
   },
   {
     title: "What's My Home Worth?",
@@ -106,11 +106,11 @@ export const TOOLS: ToolDef[] = [
     title: "Compare Homes",
     tagline: "Side-by-side comparison",
     description:
-      "Compare properties side by side — price, monthly cost, taxes, and public-record findings.",
-    href: "/property-insights",
+      "Compare two NYC properties side by side — public-record stats, assessed values, and recent sales.",
+    href: "/property-insights?mode=compare",
     icon: ArrowLeftRight,
     tile: "bg-pastel-blue",
     ink: "text-pastel-blue-ink",
-    stage: "Stage 7",
+    stage: "Live",
   },
 ];
