@@ -73,9 +73,11 @@ and the page (`app/monthly-cost/`) is a thin UI shell over it.
     lender origination/underwriting/processing, appraisal, credit & flood
     reports, plus the home inspection — inspection and appraisal are
     typically paid out of pocket BEFORE closing day. Calibrated so total
-    buyer closing costs land at ≈2.5% of price (a commonly cited NYC
-    benchmark); $0 when the modeled lines already meet or exceed it
-    (e.g., mansion-tax cases), with an assumptions note saying so.
+    buyer closing costs land at ≈3.5% of price (a realistic all-in NYC
+    estimate; research 2026-10-10: origination typically 0.5–1% of loan,
+    appraisal $450–$800, credit report $50–$150, inspection $300–$700).
+    $0 when the modeled lines already meet or exceed the benchmark
+    (e.g., high mansion-tax cases), with an assumptions note saying so.
   - **Co-op note:** the model assumes a condo/house purchase. Co-op share
     loans record no real-property mortgage (no recording tax; UCC-1 filing
     instead). **Co-op flip tax is building-specific and EXCLUDED** from the
@@ -106,7 +108,8 @@ Stage 4 coverage highlights:
 - VA: no monthly MI, funding fee financed (mortgageAmount = price × 1.0215).
 - Cash-to-close at $1.2M: recording tax $20,790 (1.925% of $1.08M loan) +
   mansion tax $12,000 (1% of full price) + title $5,400 + attorney $3,500 +
-  $120k down = **$161,690**; mansion line omitted below $1M.
+  misc lender fees $310 (3.5% plug) + $120k down = **$162,000**; mansion
+  line omitted below $1M.
 - Recording-tax bracket boundary at exactly $500k (higher rate); mansion
   tax entire-price-not-marginal ($2M → $25,000, not $12,500).
 - HOA equivalence: +$500 HOA moves total exactly $500, cash-to-close
