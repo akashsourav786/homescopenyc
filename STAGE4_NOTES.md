@@ -69,6 +69,13 @@ and the page (`app/monthly-cost/`) is a thin UI shell over it.
     thumb; actual premiums follow the NY-regulated TIRSA schedule).
   - **Attorney fee:** illustrative flat $3,500 (typical NYC buyer range
     $2,000–$5,000).
+  - **Lender & third-party fees (misc., illustrative):** allowance for
+    lender origination/underwriting/processing, appraisal, credit & flood
+    reports, plus the home inspection — inspection and appraisal are
+    typically paid out of pocket BEFORE closing day. Calibrated so total
+    buyer closing costs land at ≈2.5% of price (a commonly cited NYC
+    benchmark); $0 when the modeled lines already meet or exceed it
+    (e.g., mansion-tax cases), with an assumptions note saying so.
   - **Co-op note:** the model assumes a condo/house purchase. Co-op share
     loans record no real-property mortgage (no recording tax; UCC-1 filing
     instead). **Co-op flip tax is building-specific and EXCLUDED** from the
