@@ -33,6 +33,7 @@ import {
   CREDIT_TIERS,
   LOAN_PROGRAMS,
   RENTAL_INCOME_HAIRCUT,
+  dtiCapJustifications,
   getMinDownPct,
   propertyTypeLabel,
   type LoanProgram,
@@ -150,8 +151,6 @@ export type SensitivityOutcome =
   | { ok: true; baselineMaxPrice: number; rows: SensitivityRow[] }
   | { ok: false; issues: ValidationIssue[] };
 
-/** Illustrative rate cushion added in the conservative scenario. */
-export const CONSERVATIVE_RATE_BUFFER_PCT = 0.5;
 /** NYC-typical default closing-cost assumption. */
 export const DEFAULT_CLOSING_COST_PCT = 0.03;
 
@@ -405,8 +404,6 @@ export function validateInputs(
 interface SolveParams {
   frontDTI: number;
   backDTI: number;
-  /** Extra illustrative rate cushion in percentage points (conservative). */
-  rateBufferPct: number;
 }
 
 interface SolvedPrice {
@@ -429,9 +426,12 @@ function solveMaxPrice(
   // DTI math runs on qualifying income: base income plus counted rental
   // income (multifamily only, after the illustrative 75% haircut).
   const monthlyIncome = effectiveMonthlyIncome(inputs);
+  // Both scenarios use the same effective rate (base + credit-tier
+  // adjustment). The conservative/higher spread comes from the DTI caps
+  // alone — two underwriting standards on the same loan.
   const effectiveRatePct = Math.max(
     0,
-    inputs.annualRatePct + tierAdjustmentPct + params.rateBufferPct,
+    inputs.annualRatePct + tierAdjustmentPct,
   );
 
   const frontBudget = monthlyIncome * params.frontDTI;
@@ -520,18 +520,14 @@ function buildResult(
   program: LoanProgram,
   solved: SolvedPrice,
   tierAdjustmentPct: number,
-  scenarioLabel: string,
+  scenarioLabel: "conservative" | "higher",
   capsLabel: string,
 ): QualificationResult {
   const maxPrice = Math.floor(solved.rawMaxPrice / 1000) * 1000;
   const monthlyIncome = effectiveMonthlyIncome(inputs);
   const rentalCounted = rentalIncomeCounted(inputs);
   const minDownForUnits = getMinDownPct(program, inputs.propertyType);
-  const effectiveRatePct = Math.max(
-    0,
-    inputs.annualRatePct + tierAdjustmentPct +
-      (scenarioLabel === "conservative" ? CONSERVATIVE_RATE_BUFFER_PCT : 0),
-  );
+  const effectiveRatePct = Math.max(0, inputs.annualRatePct + tierAdjustmentPct);
 
   const downPct =
     inputs.downPayment.mode === "percent"
@@ -574,6 +570,7 @@ function buildResult(
   const money = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
   const assumptions: string[] = [
     `Scenario: ${scenarioLabel} — DTI caps ${capsLabel}, rate ${effectiveRatePct.toFixed(2)}%.`,
+    ...dtiCapJustifications(program.id, scenarioLabel),
     tierAdjustmentPct > 0
       ? `Credit tier adds +${tierAdjustmentPct.toFixed(2)}% illustrative pricing adjustment (not a multiplier, not an approval factor).`
       : `No credit-tier adjustment applied${inputs.creditTierId ? "" : " (no range selected)"}.`,
@@ -638,12 +635,10 @@ export function qualifyBuyer(
   const conservativeParams: SolveParams = {
     frontDTI: program.conservativeDtiCaps.front,
     backDTI: program.conservativeDtiCaps.back,
-    rateBufferPct: CONSERVATIVE_RATE_BUFFER_PCT,
   };
   const higherParams: SolveParams = {
     frontDTI: program.dtiCaps.front,
     backDTI: program.dtiCaps.back,
-    rateBufferPct: 0,
   };
 
   const caps = (p: SolveParams) =>
