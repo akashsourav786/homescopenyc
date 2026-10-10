@@ -21,6 +21,8 @@ function baseInputs(
     annualInsurance: 1800,
     monthlyHOA: 0,
     closingCostPct: 0.03,
+    propertyType: "single" as const,
+    monthlyRentalIncome: 0,
     ...overrides,
   };
 }
@@ -166,13 +168,148 @@ describe("qualifyBuyer", () => {
     // 60k / (10% + 3%) ≈ $461,538 → floored to $461,000
     expect(out.value.higher.maxPrice).toBe(461000);
   });
+
+  it("regression: real client scenario lands near the actual $710k approval", () => {
+    // Akash's client: $130k income, 10% down, $6k/yr Bronx taxes, 740+
+    // credit, no debt → lender approved $710k. With AUS-realistic caps the
+    // engine must land in the same ballpark, not at the old ~$384k.
+    const out = qualifyBuyer(
+      baseInputs({
+        annualIncome: 130000,
+        monthlyDebts: 0,
+        savings: 100000,
+        downPayment: { mode: "percent", pct: 10 },
+        creditTierId: "excellent",
+        annualPropertyTax: 6000,
+        annualInsurance: 2400,
+      }),
+    );
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.value.higher.maxPrice).toBeGreaterThanOrEqual(650000);
+    expect(out.value.higher.maxPrice).toBeLessThanOrEqual(750000);
+  });
+});
+
+describe("multifamily + rental income", () => {
+  // savings is set high ($300k) so the DTI solve binds — at the default
+  // $120k the cash cap would bind first and rental income couldn't move
+  // the result (correct economics, unhelpful test).
+  const multifamilyBase = () =>
+    baseInputs({
+      propertyType: "two-unit",
+      downPayment: { mode: "percent", pct: 20 },
+      monthlyRentalIncome: 3000,
+      savings: 300000,
+    });
+
+  it("rental income raises the max price vs identical single-family inputs", () => {
+    const single = qualifyBuyer(
+      baseInputs({
+        downPayment: { mode: "percent", pct: 20 },
+        savings: 300000,
+      }),
+    );
+    const multi = qualifyBuyer(multifamilyBase());
+    expect(single.ok && multi.ok).toBe(true);
+    if (!single.ok || !multi.ok) return;
+    expect(multi.value.higher.maxPrice).toBeGreaterThan(
+      single.value.higher.maxPrice,
+    );
+    // 75% × $3,000 = $2,250/mo counted toward qualifying income.
+    expect(multi.value.higher.rentalIncomeCounted).toBeCloseTo(2250, 0);
+  });
+
+  it("counts exactly 75% of entered rental income", () => {
+    // $2,000/mo rent × 75% = $1,500/mo = $18,000/yr of qualifying income.
+    // Adding that $18k to base income on a single-family must give the
+    // identical result — proving the haircut is exactly 75%.
+    const viaRent = qualifyBuyer(
+      baseInputs({
+        propertyType: "two-unit",
+        downPayment: { mode: "percent", pct: 20 },
+        monthlyRentalIncome: 2000,
+        savings: 300000,
+      }),
+    );
+    const viaIncome = qualifyBuyer(
+      baseInputs({
+        annualIncome: 150000 + 18000,
+        downPayment: { mode: "percent", pct: 20 },
+        savings: 300000,
+      }),
+    );
+    expect(viaRent.ok && viaIncome.ok).toBe(true);
+    if (!viaRent.ok || !viaIncome.ok) return;
+    expect(viaRent.value.higher.maxPrice).toBe(
+      viaIncome.value.higher.maxPrice,
+    );
+  });
+
+  it("rejects conventional 3–4 unit with 10% down, citing the 25% minimum", () => {
+    const out = qualifyBuyer(
+      baseInputs({
+        propertyType: "three-four-unit",
+        downPayment: { mode: "percent", pct: 10 },
+      }),
+    );
+    expect(out.ok).toBe(false);
+    if (out.ok) return;
+    const issue = out.issues.find((i) => i.code === "BELOW_PROGRAM_MINIMUM");
+    expect(issue).toBeDefined();
+    expect(issue!.message).toContain("25");
+  });
+
+  it("accepts conventional 2-unit with 15% down (the unit minimum)", () => {
+    const out = qualifyBuyer(
+      baseInputs({
+        propertyType: "two-unit",
+        downPayment: { mode: "percent", pct: 15 },
+      }),
+    );
+    expect(out.ok).toBe(true);
+  });
+
+  it("zero rental income on multifamily behaves like single-family", () => {
+    const multi = qualifyBuyer(
+      baseInputs({
+        propertyType: "two-unit",
+        downPayment: { mode: "percent", pct: 20 },
+        monthlyRentalIncome: 0,
+        savings: 300000,
+      }),
+    );
+    const single = qualifyBuyer(
+      baseInputs({
+        downPayment: { mode: "percent", pct: 20 },
+        savings: 300000,
+      }),
+    );
+    expect(multi.ok && single.ok).toBe(true);
+    if (!multi.ok || !single.ok) return;
+    expect(multi.value.higher.maxPrice).toBe(single.value.higher.maxPrice);
+    expect(multi.value.higher.rentalIncomeCounted).toBe(0);
+  });
+
+  it("rejects negative rental income", () => {
+    const out = qualifyBuyer(baseInputs({ monthlyRentalIncome: -100 }));
+    expect(out.ok).toBe(false);
+    if (out.ok) return;
+    expect(
+      out.issues.some((i) => i.code === "INVALID_RENTAL_INCOME"),
+    ).toBe(true);
+  });
 });
 
 describe("sensitivity", () => {
   it("moves the max price in the expected directions", () => {
     // monthlyDebts: 1500 makes the back-end DTI the binding constraint,
-    // so debt changes actually move the result.
-    const out = sensitivity(baseInputs({ monthlyDebts: 1500 }));
+    // so debt changes actually move the result. savings: 200000 keeps the
+    // DTI solve (not the cash cap) binding — with fixed savings, a bigger
+    // down-payment percent would otherwise *shrink* the affordable price
+    // (same cash, more per dollar down = less house), which is correct
+    // economics but not what this direction test is checking.
+    const out = sensitivity(baseInputs({ monthlyDebts: 1500, savings: 200000 }));
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     const row = (label: string, change: string) =>

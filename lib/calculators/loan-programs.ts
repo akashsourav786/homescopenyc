@@ -17,6 +17,27 @@ export interface DtiCaps {
   back: number;
 }
 
+/** Property types supported by the calculator. */
+export type PropertyType = "single" | "two-unit" | "three-four-unit";
+
+export const PROPERTY_TYPES: { id: PropertyType; label: string }[] = [
+  { id: "single", label: "Single-family" },
+  { id: "two-unit", label: "2-unit" },
+  { id: "three-four-unit", label: "3–4 units" },
+];
+
+export function propertyTypeLabel(t: PropertyType): string {
+  return PROPERTY_TYPES.find((p) => p.id === t)?.label ?? t;
+}
+
+/**
+ * Illustrative haircut applied to user-entered rental income before it counts
+ * toward qualifying income (vacancy/maintenance allowance).
+ * Source: Fannie Mae rental-income guidelines use 75% of gross rents —
+ * labeled illustrative; lenders verify with signed leases or an appraisal.
+ */
+export const RENTAL_INCOME_HAIRCUT = 0.75;
+
 export interface MortgageInsuranceRule {
   kind: "pmi" | "fha-mip" | "none";
   /** Down-payment fraction below which monthly MI applies (PMI only). */
@@ -36,8 +57,10 @@ export interface LoanProgram {
   id: LoanProgramId;
   name: string;
   shortName: string;
-  /** Minimum down payment, as a fraction (0.03 = 3%). */
+  /** Minimum down payment for a single-family home, as a fraction (0.03 = 3%). */
   minDownPct: number;
+  /** Minimum down payment by property type, as fractions (conforming LTV limits). */
+  minDownPctByUnits: Record<PropertyType, number>;
   /** Standard ("higher" scenario) DTI caps. */
   dtiCaps: DtiCaps;
   /** Tighter caps used for the "conservative" scenario. */
@@ -57,7 +80,12 @@ export const LOAN_PROGRAMS: Record<LoanProgramId, LoanProgram> = {
     name: "Conventional",
     shortName: "Conv.",
     minDownPct: 0.03,
-    dtiCaps: { front: 0.28, back: 0.36 },
+    minDownPctByUnits: {
+      single: 0.03,
+      "two-unit": 0.15,
+      "three-four-unit": 0.25,
+    },
+    dtiCaps: { front: 0.45, back: 0.5 },
     conservativeDtiCaps: { front: 0.25, back: 0.33 },
     mortgageInsurance: {
       kind: "pmi",
@@ -66,16 +94,21 @@ export const LOAN_PROGRAMS: Record<LoanProgramId, LoanProgram> = {
       description:
         "Illustrative private mortgage insurance (PMI) of 0.50%/yr of the loan amount, applied while the down payment is below 20% and removed at 80% loan-to-value. Actual PMI varies by lender, credit, and loan terms.",
     },
-    source: "Fannie Mae Selling Guide — illustrative conforming guidelines",
-    effectiveDate: "2024-06",
-    note: "Illustrative caps only. Conforming-loan qualification is set by the lender and automated underwriting; individual results vary.",
+    source: "Fannie Mae Selling Guide — Desktop Underwriter (DU) maximums, illustrative",
+    effectiveDate: "2026-10",
+    note: "Caps reflect DU automated-underwriting maximums (up to 50% DTI with strong compensating factors such as excellent credit and reserves). Many lenders apply stricter overlays, often 45%. Unit-count minimum down payments follow conforming LTV limits (illustrative). Real qualification is set by the lender/underwriter.",
   },
   fha: {
     id: "fha",
     name: "FHA",
     shortName: "FHA",
     minDownPct: 0.035,
-    dtiCaps: { front: 0.31, back: 0.43 },
+    minDownPctByUnits: {
+      single: 0.035,
+      "two-unit": 0.035,
+      "three-four-unit": 0.035,
+    },
+    dtiCaps: { front: 0.47, back: 0.57 },
     conservativeDtiCaps: { front: 0.28, back: 0.4 },
     mortgageInsurance: {
       kind: "fha-mip",
@@ -84,18 +117,20 @@ export const LOAN_PROGRAMS: Record<LoanProgramId, LoanProgram> = {
       description:
         "Illustrative FHA mortgage insurance: 1.75% upfront MIP financed into the loan plus 0.55%/yr annual MIP on the loan amount. FHA MIP rules (including when it can drop) depend on the loan's down payment and term.",
     },
-    source: "FHA Single Family Housing Policy Handbook 4000.1 — illustrative",
-    effectiveDate: "2024-06",
-    note: "FHA loans require lender approval and property eligibility. Figures here are illustrative — verify current MIP with a lender.",
+    source: "FHA Single Family Housing Policy Handbook 4000.1 + TOTAL Mortgage Scorecard maximums — illustrative",
+    effectiveDate: "2026-10",
+    note: "Caps reflect TOTAL Scorecard maximums (46.99%/56.99%) with AUS approval and compensating factors. Lenders apply overlays. FHA loans require lender approval and property eligibility — figures illustrative, verify current rules with a lender.",
   },
   va: {
     id: "va",
     name: "VA",
     shortName: "VA",
     minDownPct: 0,
-    // VA guidelines center on residual income rather than a front-end ratio;
-    // the 41% back-end figure is the commonly cited DTI guideline.
-    dtiCaps: { front: 0.41, back: 0.41 },
+    minDownPctByUnits: { single: 0, "two-unit": 0, "three-four-unit": 0 },
+    // VA has no hard DTI maximum — 41% is the traditional guideline. The
+    // "higher" caps reflect AUS approvals with strong residual income; the
+    // residual-income test itself is not modeled (see note).
+    dtiCaps: { front: 0.45, back: 0.5 },
     conservativeDtiCaps: { front: 0.38, back: 0.38 },
     mortgageInsurance: {
       kind: "none",
@@ -104,8 +139,8 @@ export const LOAN_PROGRAMS: Record<LoanProgramId, LoanProgram> = {
         "No monthly mortgage insurance. Illustrative VA funding fee of 2.15% (first-use, no down payment) financed into the loan. Actual fee depends on service history, down payment, and prior VA loan use; some borrowers are exempt.",
     },
     source: "VA Lenders Handbook — illustrative",
-    effectiveDate: "2024-06",
-    note: "VA loans are for eligible veterans, service members, and qualifying spouses only. VA also applies a residual-income test not modeled here.",
+    effectiveDate: "2026-10",
+    note: "VA has no hard DTI maximum; 41% is the traditional guideline and higher ratios are approved with strong residual income. The VA residual-income test itself is not modeled here. For eligible veterans, service members, and qualifying spouses only.",
   },
 };
 
@@ -159,4 +194,12 @@ export const CREDIT_TIERS: CreditTier[] = [
 export function getCreditTier(id: string | undefined): CreditTier | undefined {
   if (!id) return undefined;
   return CREDIT_TIERS.find((t) => t.id === id);
+}
+
+/** Minimum down payment for a program + property type, as a fraction. */
+export function getMinDownPct(
+  program: LoanProgram,
+  propertyType: PropertyType,
+): number {
+  return program.minDownPctByUnits[propertyType] ?? program.minDownPct;
 }

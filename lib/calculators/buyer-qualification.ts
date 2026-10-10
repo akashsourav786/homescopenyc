@@ -32,12 +32,16 @@
 import {
   CREDIT_TIERS,
   LOAN_PROGRAMS,
+  RENTAL_INCOME_HAIRCUT,
+  getMinDownPct,
+  propertyTypeLabel,
   type LoanProgram,
   type LoanProgramId,
+  type PropertyType,
 } from "./loan-programs";
 
 /** Re-exported so UI code can import all engine types from one place. */
-export type { LoanProgramId };
+export type { LoanProgramId, PropertyType };
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -69,6 +73,14 @@ export interface BuyerQualificationInputs {
   monthlyHOA: number;
   /** Estimated closing costs as a fraction of price (0.03 = 3%). */
   closingCostPct: number;
+  /** Property type — multifamily unlocks rental-income qualifying. */
+  propertyType: PropertyType;
+  /**
+   * User-entered monthly rental income from the other unit(s), dollars.
+   * Only counted toward qualifying income for multifamily (after the
+   * illustrative 75% haircut); ignored for single-family.
+   */
+  monthlyRentalIncome: number;
 }
 
 export interface ValidationIssue {
@@ -107,6 +119,10 @@ export interface QualificationResult {
   bindingConstraint: "front-end DTI" | "back-end DTI" | "cash available";
   /** Rate actually used, after tier adjustment and any scenario buffer. */
   effectiveRatePct: number;
+  /** Gross monthly income used for DTI math (base + counted rental income). */
+  effectiveMonthlyIncome: number;
+  /** Monthly rental income counted (after the 75% haircut); 0 for single-family. */
+  rentalIncomeCounted: number;
   /** Human-readable assumption lines for the UI assumptions panel. */
   assumptions: string[];
 }
@@ -138,6 +154,31 @@ export type SensitivityOutcome =
 export const CONSERVATIVE_RATE_BUFFER_PCT = 0.5;
 /** NYC-typical default closing-cost assumption. */
 export const DEFAULT_CLOSING_COST_PCT = 0.03;
+
+/**
+ * Monthly rental income actually counted toward qualifying income:
+ * the illustrative 75% haircut (vacancy/maintenance allowance) applied to
+ * user-entered rents, multifamily only. Single-family ignores the field.
+ */
+export function rentalIncomeCounted(
+  inputs: BuyerQualificationInputs,
+): number {
+  if (inputs.propertyType === "single") return 0;
+  const v = inputs.monthlyRentalIncome;
+  if (!Number.isFinite(v) || v <= 0) return 0;
+  return RENTAL_INCOME_HAIRCUT * v;
+}
+
+/**
+ * Gross monthly income used for all DTI math: base income plus counted
+ * rental income. This is what lenders do — qualifying income, not just
+ * W-2 income.
+ */
+export function effectiveMonthlyIncome(
+  inputs: BuyerQualificationInputs,
+): number {
+  return inputs.annualIncome / 12 + rentalIncomeCounted(inputs);
+}
 
 /* ------------------------------------------------------------------ */
 /* 1. Monthly payment                                                  */
@@ -206,6 +247,32 @@ export function validateInputs(
     );
   }
 
+  if (
+    inputs.propertyType !== "single" &&
+    inputs.propertyType !== "two-unit" &&
+    inputs.propertyType !== "three-four-unit"
+  ) {
+    issues.push(
+      issue(
+        "propertyType",
+        "UNKNOWN_PROPERTY_TYPE",
+        "Choose single-family, 2-unit, or 3–4 units.",
+      ),
+    );
+  }
+  if (
+    !num(inputs.monthlyRentalIncome) ||
+    inputs.monthlyRentalIncome < 0
+  ) {
+    issues.push(
+      issue(
+        "monthlyRentalIncome",
+        "INVALID_RENTAL_INCOME",
+        "Rental income can't be negative.",
+      ),
+    );
+  }
+
   const program = LOAN_PROGRAMS[inputs.loanProgramId];
   if (!program) {
     issues.push(
@@ -227,6 +294,8 @@ export function validateInputs(
         );
       }
     }
+    const minDown = getMinDownPct(program, inputs.propertyType);
+    const minDownLabel = `${(minDown * 100).toFixed(1)}%`;
     const dp = inputs.downPayment;
     if (dp.mode === "percent") {
       if (!num(dp.pct) || dp.pct < 0 || dp.pct > 100) {
@@ -237,12 +306,14 @@ export function validateInputs(
             "Down payment must be between 0% and 100%.",
           ),
         );
-      } else if (dp.pct / 100 < program.minDownPct) {
+      } else if (dp.pct / 100 < minDown) {
         issues.push(
           issue(
             "downPayment",
             "BELOW_PROGRAM_MINIMUM",
-            `${program.name} requires at least ${(program.minDownPct * 100).toFixed(1)}% down.`,
+            inputs.propertyType === "single"
+              ? `${program.name} requires at least ${minDownLabel} down.`
+              : `${program.name} requires at least ${minDownLabel} down on ${propertyTypeLabel(inputs.propertyType)} properties (illustrative).`,
           ),
         );
       }
@@ -355,7 +426,9 @@ function solveMaxPrice(
   params: SolveParams,
   tierAdjustmentPct: number,
 ): SolvedPrice {
-  const monthlyIncome = inputs.annualIncome / 12;
+  // DTI math runs on qualifying income: base income plus counted rental
+  // income (multifamily only, after the illustrative 75% haircut).
+  const monthlyIncome = effectiveMonthlyIncome(inputs);
   const effectiveRatePct = Math.max(
     0,
     inputs.annualRatePct + tierAdjustmentPct + params.rateBufferPct,
@@ -451,7 +524,9 @@ function buildResult(
   capsLabel: string,
 ): QualificationResult {
   const maxPrice = Math.floor(solved.rawMaxPrice / 1000) * 1000;
-  const monthlyIncome = inputs.annualIncome / 12;
+  const monthlyIncome = effectiveMonthlyIncome(inputs);
+  const rentalCounted = rentalIncomeCounted(inputs);
+  const minDownForUnits = getMinDownPct(program, inputs.propertyType);
   const effectiveRatePct = Math.max(
     0,
     inputs.annualRatePct + tierAdjustmentPct +
@@ -496,11 +571,17 @@ function buildResult(
   const closingCosts = round2(maxPrice * inputs.closingCostPct);
   const cashToClose = round2(downPaymentAmount + closingCosts);
 
+  const money = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
   const assumptions: string[] = [
     `Scenario: ${scenarioLabel} — DTI caps ${capsLabel}, rate ${effectiveRatePct.toFixed(2)}%.`,
     tierAdjustmentPct > 0
       ? `Credit tier adds +${tierAdjustmentPct.toFixed(2)}% illustrative pricing adjustment (not a multiplier, not an approval factor).`
       : `No credit-tier adjustment applied${inputs.creditTierId ? "" : " (no range selected)"}.`,
+    `Property type: ${propertyTypeLabel(inputs.propertyType)}.`,
+    rentalCounted > 0
+      ? `Rental income counted: 75% × ${money(inputs.monthlyRentalIncome)}/mo = ${money(rentalCounted)}/mo toward qualifying income (illustrative; lenders verify with signed leases or an appraisal).`
+      : undefined,
+    `Minimum down for ${program.name} on ${propertyTypeLabel(inputs.propertyType)}: ${(minDownForUnits * 100).toFixed(1)}% (illustrative).`,
     miApplies
       ? `Mortgage insurance (${program.name}): ${mi.description}`
       : `No monthly mortgage insurance (${program.name}).`,
@@ -527,6 +608,8 @@ function buildResult(
     allowedHousing: round2(solved.allowedHousing),
     bindingConstraint: solved.bindingConstraint,
     effectiveRatePct,
+    effectiveMonthlyIncome: round2(monthlyIncome),
+    rentalIncomeCounted: round2(rentalCounted),
     assumptions,
   };
 }
@@ -584,19 +667,26 @@ export function qualifyBuyer(
   );
 
   // Amount-mode down payments can't be checked against the program minimum
-  // until we know the price — check it here against the solved result.
+  // until we know the price — check it here against the solved result,
+  // using the unit-count-adjusted minimum.
   if (inputs.downPayment.mode === "amount" && higher.maxPrice > 0) {
     const effectivePct = higher.downPaymentAmount / higher.maxPrice;
-    if (effectivePct < program.minDownPct - 1e-9) {
+    const minDown = getMinDownPct(program, inputs.propertyType);
+    if (effectivePct < minDown - 1e-9) {
       return {
         ok: false,
         issues: [
           {
             field: "downPayment",
             code: "BELOW_PROGRAM_MINIMUM",
-            message: `This down payment is below the ${program.name} minimum of ${(
-              program.minDownPct * 100
-            ).toFixed(1)}% at the estimated price. Increase the down payment or savings.`,
+            message:
+              inputs.propertyType === "single"
+                ? `This down payment is below the ${program.name} minimum of ${(
+                    minDown * 100
+                  ).toFixed(1)}% at the estimated price. Increase the down payment or savings.`
+                : `This down payment is below the ${program.name} minimum of ${(
+                    minDown * 100
+                  ).toFixed(1)}% for ${propertyTypeLabel(inputs.propertyType)} properties at the estimated price (illustrative). Increase the down payment or savings.`,
           },
         ],
       };
