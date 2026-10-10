@@ -189,3 +189,48 @@ tests use $300k savings for the same reason — documented in the test file.
 
 **Verification (actually ran):** `npm test` 22/22 ✅ · `npm run lint` 0
 errors ✅ · `npm run build` 12/12 routes prerendered ✅.
+
+## 9. Update 2026-10-10 — conservative scenario raised, sourced assumptions, CTA placement (still Stage 3)
+
+Akash's feedback: the conservative scenario was too low and the
+$315k–$688k spread was confusingly wide. Research confirmed 43% back-end DTI
+is the decade-long QM standard (CFPB General QM Rule; the 43% cap was replaced
+by the APOR price test in July 2021 but lives on as the most common lender
+overlay), and Fannie Mae manual underwriting runs 36% base / 45% with
+compensating factors (Selling Guide B3-6-02).
+
+**Changes:**
+- **Conservative caps raised:** conventional 25/33 → **33/43** (43% back-end
+  = the QM-legacy "approved without drama" line; 33% front-end = comfortable
+  housing ratio); FHA 28/40 → **31/43** (Handbook 4000.1 standard ratios);
+  VA 38/38 → **41/41** (VA Lenders Handbook traditional guideline). "Higher"
+  caps unchanged (45/50, 47/57, 45/50). Program notes updated to explain the
+  conservative basis.
+- **Rate cushion removed:** the +0.50% illustrative cushion on the
+  conservative scenario is gone (`CONSERVATIVE_RATE_BUFFER_PCT` deleted).
+  Both scenarios now price the same loan (base rate + credit-tier
+  adjustment); the spread reflects two underwriting standards, not two
+  different loans. Client fixture: conservative **$474k** (front-end binding
+  at 33%) vs higher **$688k** — a 1.45x spread instead of 2.2x.
+- **Sourced assumptions:** new `dtiCapJustifications(program, scenario)`
+  helper in loan-programs.ts; the assumptions panel now shows per-scenario
+  source lines (e.g., "Fannie Mae Selling Guide B3-6-02", "Handbook 4000.1",
+  "CFPB General QM Rule", "VA Lenders Handbook") plus the manual-underwriting
+  reference (36%/45%, B3-6-02) for conventional.
+- **NYC area-variance note:** always-visible line under the results —
+  "Estimates can vary by neighborhood — property taxes, insurance costs, and
+  HOA/maintenance fees differ across NYC boroughs and surrounding areas."
+- **Contact CTA moved:** "Want a better understanding of these numbers?
+  Contact Akash →" now sits **directly under the results**, before the
+  scenario toggle inputs and what-if section (the old bottom CTA was removed
+  as a duplicate). The mortgage-professional disclaimer placement from the
+  previous update is unchanged.
+
+**Tests:** 25/25 pass (was 22). New: client-fixture conservative pinned to
+$472k–$476k (front-end DTI binding); conservative ≡ higher effective rate
+(no cushion); assumption text contains "B3-6-02" (conventional) and "4000.1"
+(FHA). No existing tests broke — the cushion removal only affected the
+conservative solve, and the higher-scenario regression band still holds.
+
+**Verification (actually ran):** `npm test` 25/25 ✅ · `npm run lint` 0
+errors ✅ · `npm run build` 12/12 routes prerendered ✅.
