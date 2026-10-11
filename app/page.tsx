@@ -3,7 +3,6 @@ import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { TOOLS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-import { ExitLogo } from "@/components/brand/exit-logo";
 
 /**
  * Homepage — "Big Type" (Direction D): giant Inter Tight headline with a
@@ -94,7 +93,6 @@ export default function HomePage() {
           aria-label="About the creator"
           className="flex flex-col gap-8 bg-foreground px-7 py-10 text-background sm:flex-row sm:items-center sm:px-12 sm:py-14 dark:bg-card dark:text-foreground"
         >
-          <ExitLogo variant="white" className="h-12 w-auto" />
           <div className="min-w-0 flex-1">
             <h2 className="font-display text-[26px] font-extrabold tracking-tight sm:text-[32px]">
               Built by Akash Rahman
