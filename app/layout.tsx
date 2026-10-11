@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
+// Fonts are self-hosted in /public/fonts (see globals.css @font-face).
+// Preload the two headline/body workhorses to avoid a flash of fallback type.
+const FONT_PRELOADS = [
+  "/fonts/InterTight-800.woff2",
+  "/fonts/Inter-500.woff2",
+];
 
 export const metadata: Metadata = {
   title: {
@@ -27,8 +27,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       // The theme script sets the .dark class before paint; hydration must
       // not warn about the class attribute mismatch.
       suppressHydrationWarning
-      className={`${inter.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
+      <head>
+        {FONT_PRELOADS.map((href) => (
+          <link
+            key={href}
+            rel="preload"
+            href={href}
+            as="font"
+            type="font/woff2"
+            crossOrigin="anonymous"
+          />
+        ))}
+      </head>
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
           <SiteHeader />
