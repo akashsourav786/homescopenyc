@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
-// Fonts are self-hosted in /public/fonts (see globals.css @font-face).
-// Preload the two headline/body workhorses to avoid a flash of fallback type.
-const FONT_PRELOADS = [
-  "/fonts/InterTight-800.woff2",
-  "/fonts/Inter-500.woff2",
-];
+// Self-hosted-at-build fonts via next/font: CSS variables --font-inter and
+// --font-inter-tight, consumed by globals.css. No runtime CDN dependency.
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  variable: "--font-inter-tight",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -27,19 +30,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       // The theme script sets the .dark class before paint; hydration must
       // not warn about the class attribute mismatch.
       suppressHydrationWarning
-      className="h-full antialiased"
+      className={`h-full antialiased ${inter.variable} ${interTight.variable}`}
     >
       <head>
-        {FONT_PRELOADS.map((href) => (
-          <link
-            key={href}
-            rel="preload"
-            href={href}
-            as="font"
-            type="font/woff2"
-            crossOrigin="anonymous"
-          />
-        ))}
+        {/* next/font injects its own preloads + @font-face; nothing manual needed. */}
       </head>
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
