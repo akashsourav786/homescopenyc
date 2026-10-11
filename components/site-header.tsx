@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
@@ -10,6 +9,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { Container } from "./container";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { ExitLogo } from "@/components/brand/exit-logo";
 
 const ABOUT_HREF = "/about";
 const CONTACT_HREF = "/contact";
@@ -177,23 +177,8 @@ export function SiteHeader() {
             )}
             aria-label="HomeScope NYC home"
           >
-            <Image
-              src="/brand/exit-dkc-gradient.png"
-              alt="EXIT Realty DKC"
-              width={1421}
-              height={862}
-              className="h-9 w-auto dark:hidden"
-              priority
-            />
-            <Image
-              src="/brand/exit-dkc-white.png"
-              alt=""
-              aria-hidden
-              width={1421}
-              height={862}
-              className="hidden h-9 w-auto dark:block"
-              priority
-            />
+            <ExitLogo variant="gradient" className="h-9 w-auto dark:hidden" />
+            <ExitLogo variant="white" alt="" className="hidden h-9 w-auto dark:block" />
             <span className="font-display text-[19px] font-extrabold tracking-tight">
               HomeScope NYC
             </span>
