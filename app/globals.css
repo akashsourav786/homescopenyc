@@ -1,11 +1,15 @@
 @import "tailwindcss";
 
 /*
- * HomeScope NYC design tokens — visual refresh (post-Stage-1)
+ * HomeScope NYC design tokens — "Big Type" reskin (2026-10-11)
  *
- * Design language taken from the approved reference mockup:
- * warm off-white page, white cards with hairline borders, pastel icon
- * chips with toned icons, dark-teal primary actions, deep-navy type.
+ * Direction D: ultra-minimal. White page, near-black ink, hairline
+ * dividers, giant Inter Tight headlines, one teal accent sampled from
+ * the EXIT Realty DKC logo (#008C99). Dark mode inverts to near-black
+ * with a brighter teal for contrast.
+ *
+ * Fonts are self-hosted in /public/fonts (no Google Fonts CDN, no
+ * next/font — sandbox network is unreliable).
  *
  * Tailwind v4: colors are CSS variables on :root / .dark, mapped into
  * utilities via `@theme inline`. Because the mapping is "inline",
@@ -17,52 +21,97 @@
    which is set by the theme script before first paint (no flash). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ---- Self-hosted fonts ---- */
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/InterTight-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/InterTight-800.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Inter-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/Inter-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/Inter-600.woff2") format("woff2");
+}
+
 :root {
   /* ---- Light theme ---- */
-  --background: #f7f6f2; /* warm off-white page */
+  --background: #ffffff;
   --card: #ffffff;
-  --foreground: #14243e; /* deep navy type */
-  --muted: #5f6b7a; /* secondary text — ~4.8:1 on #F7F6F2 */
-  --accent: #0f766e; /* dark teal — primary actions */
+  --foreground: #0b0b0c; /* near-black ink */
+  --muted: #6e6e73; /* secondary text — ~4.9:1 on white */
+  --accent: #008c99; /* EXIT teal — primary actions, large text */
+  --accent-strong: #006e7c; /* darker teal — small text on white (~5.4:1) */
   --accent-foreground: #ffffff;
-  --accent-soft: #ddf4ed; /* mint wash for tinted surfaces */
-  --border: #e9e6de; /* warm hairline border */
-  --ring: #0f766e;
+  --accent-soft: #e6f4f5; /* teal wash for tinted surfaces */
+  --border: #e8e8ea; /* hairline */
+  --ring: #008c99;
 
-  /* Pastel icon chips (light) + toned icon ink */
-  --pastel-blue: #e6f0ff;
-  --pastel-blue-ink: #2f5fc0;
-  --pastel-mint: #ddf4ed;
-  --pastel-mint-ink: #0e6b62;
-  --pastel-lavender: #eee8fa;
-  --pastel-lavender-ink: #6f4fbb;
-  --pastel-peach: #f8ece6;
-  --pastel-peach-ink: #a8642f;
+  /*
+   * Legacy semantic tint tokens (kept names so the ~14 call sites keep
+   * working; values remapped to the minimal D palette):
+   * mint = success/teal, peach = warning/amber, blue/lavender = neutral.
+   */
+  --pastel-mint: #e3f2f4;
+  --pastel-mint-ink: #006e7c;
+  --pastel-peach: #f6ede3;
+  --pastel-peach-ink: #8a5a28;
+  --pastel-blue: #ededf0;
+  --pastel-blue-ink: #3f3f46;
+  --pastel-lavender: #ededf0;
+  --pastel-lavender-ink: #3f3f46;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
 
   color-scheme: light;
 }
 
 .dark {
   /* ---- Dark theme ---- */
-  --background: #0d1726; /* deep navy page */
-  --card: #172438; /* elevated navy card */
-  --foreground: #f3f7fc;
-  --muted: #a9b9cd;
-  --accent: #79e2cf; /* mint — primary actions */
-  --accent-foreground: #0d1726;
-  --accent-soft: #163d39;
-  --border: #26374f;
-  --ring: #79e2cf;
+  --background: #0b0b0c; /* near-black page */
+  --card: #141416; /* elevated surface */
+  --foreground: #ffffff;
+  --muted: #a9a9ae;
+  --accent: #2bb5c9; /* brighter teal for contrast on black */
+  --accent-strong: #5ed3e3;
+  --accent-foreground: #062a2f;
+  --accent-soft: #102e33;
+  --border: #26262a;
+  --ring: #2bb5c9;
 
-  /* Muted chips (dark equivalents) + lightened icon ink */
-  --pastel-blue: #203a58;
-  --pastel-blue-ink: #9dbcf5;
-  --pastel-mint: #163d39;
-  --pastel-mint-ink: #7fe3d0;
-  --pastel-lavender: #322b4d;
-  --pastel-lavender-ink: #bda9ec;
-  --pastel-peach: #4a342c;
+  --pastel-mint: #123a40;
+  --pastel-mint-ink: #5ed3e3;
+  --pastel-peach: #3a2e22;
   --pastel-peach-ink: #d9a96b;
+  --pastel-blue: #232327;
+  --pastel-blue-ink: #b9b9c0;
+  --pastel-lavender: #232327;
+  --pastel-lavender-ink: #b9b9c0;
 
   color-scheme: dark;
 }
@@ -73,6 +122,7 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
   --color-border: var(--border);
@@ -85,7 +135,8 @@
   --color-pastel-lavender-ink: var(--pastel-lavender-ink);
   --color-pastel-peach: var(--pastel-peach);
   --color-pastel-peach-ink: var(--pastel-peach-ink);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
 }
 
 body {
@@ -93,6 +144,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* Accessible focus ring for keyboard users */
