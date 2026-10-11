@@ -8,8 +8,7 @@
  * the EXIT Realty DKC logo (#008C99). Dark mode inverts to near-black
  * with a brighter teal for contrast.
  *
- * Fonts are self-hosted in /public/fonts (no Google Fonts CDN, no
- * next/font — sandbox network is unreliable).
+ * Fonts load via next/font/google at build time (see app/layout.tsx).
  *
  * Tailwind v4: colors are CSS variables on :root / .dark, mapped into
  * utilities via `@theme inline`. Because the mapping is "inline",
@@ -21,42 +20,10 @@
    which is set by the theme script before first paint (no flash). */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ---- Self-hosted fonts ---- */
-@font-face {
-  font-family: "Inter Tight";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/InterTight-700.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter Tight";
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url("/fonts/InterTight-800.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/Inter-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/Inter-500.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/Inter-600.woff2") format("woff2");
-}
+/* ---- Fonts ----
+ * Loaded via next/font/google in app/layout.tsx (build-time, no CDN).
+ * The --font-inter / --font-inter-tight CSS variables are set on <html>;
+ * the --font-sans / --font-display tokens below consume them. */
 
 :root {
   /* ---- Light theme ---- */
@@ -85,8 +52,8 @@
   --pastel-lavender: #ededf0;
   --pastel-lavender-ink: #3f3f46;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   color-scheme: light;
 }
