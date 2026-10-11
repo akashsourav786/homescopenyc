@@ -57,7 +57,7 @@ export function SiteFooter() {
             <ExitLogo variant="gradient" className="h-7 w-auto dark:hidden" />
             <ExitLogo variant="white" alt="" className="hidden h-7 w-auto dark:block" />
             <p className="text-xs leading-relaxed text-muted">
-              Brokered by EXIT Realty DKC. [Required NY disclosures — placeholder]
+              Brokered by EXIT Realty DKC.
             </p>
           </div>
           <p className="mt-3 text-xs leading-relaxed text-muted">
