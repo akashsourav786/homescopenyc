@@ -9,7 +9,6 @@ import { ThemeToggle } from "./theme-toggle";
 import { Container } from "./container";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { ExitLogo } from "@/components/brand/exit-logo";
 
 const ABOUT_HREF = "/about";
 const CONTACT_HREF = "/contact";
@@ -177,10 +176,9 @@ export function SiteHeader() {
             )}
             aria-label="HomeScope NYC home"
           >
-            <ExitLogo variant="gradient" className="h-9 w-auto dark:hidden" />
-            <ExitLogo variant="white" alt="" className="hidden h-9 w-auto dark:block" />
+            {/* HomeScope wordmark (text — no HomeScope logo exists yet) */}
             <span className="font-display text-[19px] font-extrabold tracking-tight">
-              HomeScope NYC
+              HomeScope <span className="text-accent">NYC</span>
             </span>
           </Link>
 
