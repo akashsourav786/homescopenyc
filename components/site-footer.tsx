@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { NAV_ITEMS } from "@/lib/nav";
 import { Container } from "./container";
 import { CurrentYear } from "./current-year";
+import { ExitLogo } from "@/components/brand/exit-logo";
 
 /**
  * Site footer — Direction D minimal: hairline top, brand row, quiet
@@ -21,23 +21,8 @@ export function SiteFooter() {
               className="inline-flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               aria-label="HomeScope NYC home"
             >
-              <Image
-                src="/brand/exit-dkc-gradient.png"
-                alt="EXIT Realty DKC"
-                width={1421}
-                height={862}
-                className="h-8 w-auto dark:hidden"
-                loading="lazy"
-              />
-              <Image
-                src="/brand/exit-dkc-white.png"
-                alt=""
-                aria-hidden
-                width={1421}
-                height={862}
-                className="hidden h-8 w-auto dark:block"
-                loading="lazy"
-              />
+              <ExitLogo variant="gradient" className="h-8 w-auto dark:hidden" />
+              <ExitLogo variant="white" alt="" className="hidden h-8 w-auto dark:block" />
               <span className="font-display text-[17px] font-extrabold tracking-tight">
                 HomeScope NYC
               </span>
