@@ -41,7 +41,7 @@ export default function ContactPage() {
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
           Get in touch
         </p>
-        <h1 className="mt-2 text-[32px] font-extrabold leading-[1.15] tracking-tight sm:text-4xl">
+        <h1 className="mt-2 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
           Contact Akash
         </h1>
         <p className="mt-3 max-w-md text-[15px] leading-relaxed text-muted">
