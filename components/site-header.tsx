@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Home, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { TOOLS } from "@/lib/nav";
 import { ThemeToggle } from "./theme-toggle";
 import { Container } from "./container";
@@ -84,19 +85,13 @@ function PropertyToolsDropdown({ pathname }: { pathname: string }) {
         aria-haspopup="true"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] transition-colors",
+          "flex items-center gap-1.5 whitespace-nowrap py-2 text-[14px] transition-colors",
           focusRing,
           open || isToolActive
-            ? "bg-accent-soft font-semibold text-foreground"
-            : "font-medium text-muted hover:bg-accent-soft hover:text-foreground",
+            ? "font-semibold text-foreground"
+            : "font-medium text-muted hover:text-foreground",
         )}
       >
-        {(open || isToolActive) && (
-          <span
-            className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-            aria-hidden
-          />
-        )}
         Property Tools
         <ChevronDown
           className={cn(
@@ -108,11 +103,10 @@ function PropertyToolsDropdown({ pathname }: { pathname: string }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[320px] rounded-2xl border border-border bg-card p-1.5 shadow-xl shadow-black/5">
+        <div className="absolute right-0 top-full z-50 mt-2 w-[320px] border border-border bg-card py-1 shadow-xl shadow-black/5">
           <ul>
-            {TOOLS.map((tool) => {
+            {TOOLS.map((tool, i) => {
               const active = toolPath(tool.href) === pathname;
-              const Icon = tool.icon;
               return (
                 <li key={tool.href}>
                   <Link
@@ -120,25 +114,19 @@ function PropertyToolsDropdown({ pathname }: { pathname: string }) {
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors",
+                      "group flex items-center gap-4 px-5 py-3.5 transition-colors",
                       focusRing,
-                      active ? "bg-accent-soft" : "hover:bg-accent-soft",
+                      active ? "bg-accent-soft/60" : "hover:bg-accent-soft/60",
                     )}
                   >
-                    <span
-                      className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                        tool.tile,
-                        tool.ink,
-                      )}
-                    >
-                      <Icon className="h-[18px] w-[18px]" aria-hidden />
+                    <span className="font-display text-[13px] font-bold text-accent">
+                      {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span
                         className={cn(
-                          "block truncate text-[13.5px] text-foreground",
-                          active ? "font-semibold" : "font-medium",
+                          "block truncate font-display text-[15px] tracking-tight text-foreground",
+                          active ? "font-bold" : "font-semibold",
                         )}
                       >
                         {tool.title}
@@ -147,12 +135,12 @@ function PropertyToolsDropdown({ pathname }: { pathname: string }) {
                         {tool.tagline}
                       </span>
                     </span>
-                    {active && (
-                      <span
-                        className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                        aria-hidden
-                      />
-                    )}
+                    <span
+                      className="text-accent opacity-0 transition-opacity group-hover:opacity-100"
+                      aria-hidden
+                    >
+                      →
+                    </span>
                   </Link>
                 </li>
               );
@@ -184,15 +172,29 @@ export function SiteHeader() {
           <Link
             href="/"
             className={cn(
-              "flex shrink-0 items-center gap-2.5 rounded-lg",
+              "flex shrink-0 items-center gap-3 rounded-lg",
               focusRing,
             )}
             aria-label="HomeScope NYC home"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-pastel-mint text-pastel-mint-ink">
-              <Home className="h-[18px] w-[18px]" aria-hidden />
-            </span>
-            <span className="text-[15px] font-bold tracking-tight">
+            <Image
+              src="/brand/exit-dkc-gradient.png"
+              alt="EXIT Realty DKC"
+              width={1421}
+              height={862}
+              className="h-9 w-auto dark:hidden"
+              priority
+            />
+            <Image
+              src="/brand/exit-dkc-white.png"
+              alt=""
+              aria-hidden
+              width={1421}
+              height={862}
+              className="hidden h-9 w-auto dark:block"
+              priority
+            />
+            <span className="font-display text-[19px] font-extrabold tracking-tight">
               HomeScope NYC
             </span>
           </Link>
@@ -200,40 +202,30 @@ export function SiteHeader() {
           {/* Right side: tools dropdown, About, Contact (desktop) */}
           <nav
             aria-label="Primary"
-            className="hidden shrink-0 items-center gap-1 xl:flex"
+            className="hidden shrink-0 items-center gap-7 xl:flex"
           >
             <PropertyToolsDropdown pathname={pathname} />
             <Link
               href={ABOUT_HREF}
               aria-current={aboutActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] transition-colors",
+                "whitespace-nowrap py-2 text-[14px] transition-colors",
                 focusRing,
                 aboutActive
-                  ? "bg-accent-soft font-semibold text-foreground"
-                  : "font-medium text-muted hover:bg-accent-soft hover:text-foreground",
+                  ? "font-semibold text-foreground"
+                  : "font-medium text-muted hover:text-foreground",
               )}
             >
-              {aboutActive && (
-                <span
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                  aria-hidden
-                />
-              )}
               About
             </Link>
-            <span className="pl-1">
-              <Button asChild size="sm" className="whitespace-nowrap">
-                <Link
-                  href={CONTACT_HREF}
-                  aria-current={
-                    pathname === CONTACT_HREF ? "page" : undefined
-                  }
-                >
-                  Contact Akash
-                </Link>
-              </Button>
-            </span>
+            <Button asChild className="whitespace-nowrap rounded-full">
+              <Link
+                href={CONTACT_HREF}
+                aria-current={pathname === CONTACT_HREF ? "page" : undefined}
+              >
+                Contact Akash
+              </Link>
+            </Button>
           </nav>
 
           {/* Divider between nav and actions (desktop) */}
@@ -291,10 +283,9 @@ export function SiteHeader() {
               />
             </button>
             {toolsOpen && (
-              <ul className="mt-1 flex flex-col gap-1">
-                {TOOLS.map((tool) => {
+              <ul className="mt-1 flex flex-col">
+                {TOOLS.map((tool, i) => {
                   const active = toolPath(tool.href) === pathname;
-                  const Icon = tool.icon;
                   return (
                     <li key={tool.href}>
                       <Link
@@ -302,32 +293,22 @@ export function SiteHeader() {
                         onClick={closeMenu}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-2.5 transition-colors",
+                          "flex min-h-[52px] items-center gap-4 border-b border-border px-4 py-3 transition-colors",
                           focusRing,
                           active
-                            ? "bg-accent-soft font-semibold text-foreground"
-                            : "font-medium text-muted hover:bg-accent-soft hover:text-foreground",
+                            ? "font-semibold text-foreground"
+                            : "font-medium text-muted active:text-foreground",
                         )}
                       >
-                        <span
-                          className={cn(
-                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                            tool.tile,
-                            tool.ink,
-                          )}
-                        >
-                          <Icon
-                            className="h-4 w-4"
-                            aria-hidden
-                          />
+                        <span className="font-display text-[13px] font-bold text-accent">
+                          {String(i + 1).padStart(2, "0")}
                         </span>
-                        <span className="flex-1 text-[14px]">{tool.title}</span>
-                        {active && (
-                          <span
-                            className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
-                            aria-hidden
-                          />
-                        )}
+                        <span className="flex-1 font-display text-[16px] font-semibold tracking-tight text-foreground">
+                          {tool.title}
+                        </span>
+                        <span className="text-accent" aria-hidden>
+                          →
+                        </span>
                       </Link>
                     </li>
                   );
