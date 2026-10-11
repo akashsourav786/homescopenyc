@@ -21,10 +21,8 @@ export function SiteFooter() {
               className="inline-flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               aria-label="HomeScope NYC home"
             >
-              <ExitLogo variant="gradient" className="h-8 w-auto dark:hidden" />
-              <ExitLogo variant="white" alt="" className="hidden h-8 w-auto dark:block" />
               <span className="font-display text-[17px] font-extrabold tracking-tight">
-                HomeScope NYC
+                HomeScope <span className="text-accent">NYC</span>
               </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
@@ -54,9 +52,14 @@ export function SiteFooter() {
 
         {/* Legal */}
         <div className="mt-10 border-t border-border pt-6">
-          <p className="text-xs leading-relaxed text-muted">
-            [Brokerage logo and required NY disclosures — placeholder]
-          </p>
+          {/* Brokerage attribution — the EXIT logo lives here, not in the site brand */}
+          <div className="flex items-center gap-3">
+            <ExitLogo variant="gradient" className="h-7 w-auto dark:hidden" />
+            <ExitLogo variant="white" alt="" className="hidden h-7 w-auto dark:block" />
+            <p className="text-xs leading-relaxed text-muted">
+              Brokered by EXIT Realty DKC. [Required NY disclosures — placeholder]
+            </p>
+          </div>
           <p className="mt-3 text-xs leading-relaxed text-muted">
             All calculators provide estimates for educational purposes only
             and are not mortgage approvals, appraisals, or financial advice.
