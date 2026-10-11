@@ -182,7 +182,7 @@ export function SellerProceedsCalculator() {
     <Container className="max-w-3xl py-8 sm:py-12">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
           What Will You Keep?
         </h1>
         <p className="mt-2 flex items-start gap-1.5 text-[15px] text-muted">
