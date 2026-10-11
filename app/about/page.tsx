@@ -46,7 +46,7 @@ export default function AboutPage() {
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
           The creator behind HomeScope NYC
         </p>
-        <h1 className="mt-2 text-[32px] font-extrabold leading-[1.15] tracking-tight sm:text-4xl">
+        <h1 className="mt-2 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
           About Akash
         </h1>
       </section>
