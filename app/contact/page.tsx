@@ -1,36 +1,44 @@
 import type { Metadata } from "next";
-import { Building2, Mail, Phone } from "lucide-react";
+import { AtSign, Building2, Mail, Phone } from "lucide-react";
 import { Container } from "@/components/container";
 import { Card } from "@/components/ui/card";
 import { ConsultationForm } from "@/components/consultation-form";
 
 export const metadata: Metadata = { title: "Contact Akash" };
 
-/**
- * Labeled placeholders — no invented phone numbers or email addresses.
- * Real contact details arrive after Akash provides them.
- */
+/** Akash's real contact details, from his business card. */
 const CONTACT_METHODS = [
   {
     icon: Phone,
     tile: "bg-pastel-mint",
     ink: "text-pastel-mint-ink",
     label: "Call or text",
-    value: "To be provided",
+    value: "631-833-3320",
+    href: "tel:+16318333320",
   },
   {
     icon: Mail,
     tile: "bg-pastel-blue",
     ink: "text-pastel-blue-ink",
     label: "Email",
-    value: "To be provided",
+    value: "rahmanrealty786@gmail.com",
+    href: "mailto:rahmanrealty786@gmail.com",
   },
   {
     icon: Building2,
     tile: "bg-pastel-lavender",
     ink: "text-pastel-lavender-ink",
     label: "EXIT Realty DKC office",
-    value: "To be provided",
+    value: "3825 E Tremont Ave, Bronx, NY 10465",
+    href: "https://www.google.com/maps/search/?api=1&query=3825+E+Tremont+Ave+Bronx+NY+10465",
+  },
+  {
+    icon: AtSign,
+    tile: "bg-pastel-peach",
+    ink: "text-pastel-peach-ink",
+    label: "Instagram",
+    value: "@rahmanrealty",
+    href: "https://instagram.com/rahmanrealty",
   },
 ];
 
@@ -54,7 +62,7 @@ export default function ContactPage() {
       {/* ---------- Contact methods ---------- */}
       <section aria-label="Contact methods" className="mt-6">
         <ul className="grid gap-3">
-          {CONTACT_METHODS.map(({ icon: Icon, tile, ink, label, value }) => (
+          {CONTACT_METHODS.map(({ icon: Icon, tile, ink, label, value, href }) => (
             <li key={label}>
               <Card className="flex items-center gap-4 p-5">
                 <span
@@ -66,7 +74,12 @@ export default function ContactPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
                     {label}
                   </p>
-                  <p className="mt-0.5 text-[15px] font-semibold">{value}</p>
+                  <a
+                    href={href}
+                    className="mt-0.5 block truncate text-[15px] font-semibold hover:text-accent-strong"
+                  >
+                    {value}
+                  </a>
                 </div>
               </Card>
             </li>

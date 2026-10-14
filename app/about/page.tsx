@@ -31,10 +31,11 @@ const PURPOSES = [
   },
 ];
 
-/** Labeled placeholders — real values arrive after broker review. */
+/** Brokerage facts — office details from Akash's business card. */
 const BROKERAGE_FACTS = [
-  { label: "Office address", value: "To be provided" },
-  { label: "Office phone", value: "To be provided" },
+  { label: "Office address", value: "3825 E Tremont Ave, Bronx, NY 10465" },
+  { label: "Phone", value: "631-833-3320" },
+  { label: "Email", value: "rahmanrealty786@gmail.com" },
   { label: "NYS real estate license #", value: "To be provided" },
 ];
 
