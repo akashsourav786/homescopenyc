@@ -17,6 +17,7 @@ const interTight = Inter_Tight({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://rahmanrealty786.app"),
   title: {
     default: "RahmanRealty PropertyLab — Free NYC Real Estate Toolkit",
     template: "%s · RahmanRealty PropertyLab",
