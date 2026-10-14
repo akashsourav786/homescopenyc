@@ -32,7 +32,12 @@ async function insertLead(row: LeadRow): Promise<boolean> {
  */
 async function notifyLead(row: LeadRow): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.LEAD_NOTIFY_EMAIL;
+  // Normalize: email addresses are case-insensitive, but Resend's
+  // test-sender check compares the recipient against the account email —
+  // an all-caps LEAD_NOTIFY_EMAIL (easy to fat-finger on a phone keyboard)
+  // failed that check and the send was rejected. Lowercasing here makes
+  // the env var immune to casing mistakes.
+  const to = process.env.LEAD_NOTIFY_EMAIL?.trim().toLowerCase();
   if (!apiKey || !to) return;
   const from =
     process.env.LEAD_NOTIFY_FROM ?? "RahmanRealty PropertyLab <onboarding@resend.dev>";
