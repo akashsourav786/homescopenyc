@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Building2, Info, Mail, Phone } from "lucide-react";
+import { Building2, Mail, Phone } from "lucide-react";
 import { Container } from "@/components/container";
 import { Card } from "@/components/ui/card";
+import { ConsultationForm } from "@/components/consultation-form";
 
 export const metadata: Metadata = { title: "Contact Akash" };
 
@@ -73,24 +74,9 @@ export default function ContactPage() {
         </ul>
       </section>
 
-      {/* ---------- Consultation note ---------- */}
-      <section aria-label="Consultation requests" className="mt-6 pb-12 sm:pb-16">
-        <Card className="flex gap-4 p-5">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-pastel-peach text-pastel-peach-ink">
-            <Info className="h-5 w-5" aria-hidden />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[15px] font-bold tracking-tight">
-              Prefer to book online?
-            </p>
-            <p className="mt-1 text-[14px] leading-relaxed text-muted">
-              A short consultation request form is coming soon. For now,
-              reach out directly using any method above — and mention your
-              preferred contact method (call, text, or email) and the best
-              time to reach you.
-            </p>
-          </div>
-        </Card>
+      {/* ---------- Consultation form ---------- */}
+      <section aria-label="Request a consultation" className="mt-6 pb-12 sm:pb-16">
+        <ConsultationForm />
       </section>
     </Container>
   );
