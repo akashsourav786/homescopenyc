@@ -165,7 +165,9 @@ describe("buildInsertRequest", () => {
       "https://xyz.supabase.co/rest/v1/consultation_requests",
     );
     expect(req.headers.apikey).toBe("test-anon-key");
-    expect(req.headers.Authorization).toBe("Bearer test-anon-key");
+    // No Authorization header: publishable keys are not JWTs, and sending
+    // one as Bearer breaks PostgREST role resolution (live-verified 42501).
+    expect(req.headers.Authorization).toBeUndefined();
     expect(req.headers.Prefer).toBe("return=minimal");
     const parsed = JSON.parse(req.body);
     expect(parsed.email).toBe("jane@example.com");

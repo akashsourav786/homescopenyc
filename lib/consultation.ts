@@ -213,6 +213,12 @@ export function evaluateSubmission(
 /**
  * Builds the PostgREST insert request for a lead row.
  * Pure (no network) so the URL/headers/body are unit-testable.
+ *
+ * Header rule (verified live 2026-10-14): send the key ONLY as `apikey`.
+ * Supabase's publishable keys (sb_publishable_...) are NOT JWTs — sending
+ * one as `Authorization: Bearer` makes PostgREST resolve the request to a
+ * role with no matching RLS policy, so every insert fails with 42501 even
+ * though the anon policy and grant are correct. apikey-only works.
  */
 export function buildInsertRequest(
   supabaseUrl: string,
@@ -223,7 +229,6 @@ export function buildInsertRequest(
     url: `${supabaseUrl.replace(/\/$/, "")}/rest/v1/consultation_requests`,
     headers: {
       apikey: anonKey,
-      Authorization: `Bearer ${anonKey}`,
       "Content-Type": "application/json",
       Prefer: "return=minimal",
     },
