@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   buildInsertRequest,
   buildNotificationEmail,
@@ -38,7 +38,7 @@ async function notifyLead(row: LeadRow): Promise<void> {
     process.env.LEAD_NOTIFY_FROM ?? "RahmanRealty PropertyLab <onboarding@resend.dev>";
   const { subject, text } = buildNotificationEmail(row);
   try {
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -46,8 +46,14 @@ async function notifyLead(row: LeadRow): Promise<void> {
       },
       body: JSON.stringify({ from, to, subject, text }),
     });
-  } catch {
-    // Notification failure must never fail the submission.
+    if (!res.ok) {
+      // Visible in Vercel function logs — Resend failures were previously
+      // swallowed entirely, making "no email, no error" impossible to debug.
+      const detail = (await res.text()).slice(0, 300);
+      console.error(`Lead notification failed: Resend ${res.status} ${detail}`);
+    }
+  } catch (err) {
+    console.error("Lead notification failed: network error", err);
   }
 }
 
@@ -89,8 +95,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Fire-and-forget: a notification hiccup never blocks the response.
-  void notifyLead(verdict.row);
+  // Runs after the response is sent, and Vercel waits for it — a plain
+  // fire-and-forget fetch can be cut off when the function shuts down,
+  // which silently dropped notifications with nothing in Resend's logs.
+  after(() => notifyLead(verdict.row));
 
   return NextResponse.json({ ok: true });
 }
