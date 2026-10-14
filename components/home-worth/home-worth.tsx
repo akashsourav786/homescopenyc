@@ -32,6 +32,7 @@ import {
   MIN_COMPS,
   estimateHomeValue,
   formatRangeK,
+  hpiVintageLabel,
 } from "@/lib/property-data/home-worth";
 import {
   formatCount,
@@ -230,16 +231,43 @@ export function HomeWorth() {
               <li>
                 Comparable sales: NYC Open Data, NYC Citywide Annualized
                 Calendar Sales Update (Dept. of Finance), dataset w2pb-icbu —
-                same ZIP code, same building-class letter, sold within the
-                last {COMP_LOOKBACK_DAYS} days, price ≥ $1,000. $0 and
-                nominal transfers (non-arm&apos;s-length) excluded. Accessed{" "}
-                {accessedDate}.
+                same ZIP code, exact building class first (then class letter,
+                then unfiltered as a flagged last resort), sold within the
+                last{" "}
+                {state.outcome.ok
+                  ? state.outcome.estimate.windowDays
+                  : COMP_LOOKBACK_DAYS}{" "}
+                days
+                {state.outcome.ok &&
+                state.outcome.estimate.windowDays > COMP_LOOKBACK_DAYS
+                  ? " (widened from 12 months — thin sales history)"
+                  : ""}
+                , price ≥ $1,000, within ±35% of the subject&apos;s sqft.
+                $0/nominal transfers excluded, then $/sqft outliers trimmed.
+                Accessed {accessedDate}.
               </li>
               <li>
-                Method: median $/sqft across valid comps × the subject
-                building&apos;s PLUTO sqft = midpoint; range = midpoint ±10%.
-                Requires at least {MIN_COMPS} valid comps and a known building
-                sqft — otherwise no estimate is shown.
+                Market adjustment: FHFA House Price Index, purchase-only
+                quarterly, New York-Jersey City-White Plains MSAD, vintage{" "}
+                {hpiVintageLabel()} — each comp&apos;s price scaled to current
+                dollars before the median.
+              </li>
+              <li>
+                Deed anchor: NYC ACRIS via Open Data (datasets 8h5j-fqxa and
+                bnx9-e6tj) — the subject&apos;s most recent deed of ≥
+                $10,000, adjusted the same way. Accessed {accessedDate}.
+              </li>
+              <li>
+                Rent-stabilization flag: NYC Dept. of Finance tax-benefit
+                records (dataset muvi-b6kx) — an active 421-a (codes
+                5100–5122) or J-51 (5129–5130) benefit typically means
+                rent-stabilized rents. Accessed {accessedDate}.
+              </li>
+              <li>
+                Method: median <em>adjusted</em> $/sqft across valid comps ×
+                the subject building&apos;s PLUTO sqft = midpoint; range =
+                midpoint ±10%. Requires at least {MIN_COMPS} valid comps and
+                a known building sqft — otherwise no estimate is shown.
               </li>
               <li>
                 Condo and co-op unit sales carry no square footage in the
@@ -321,6 +349,7 @@ function EstimateHero({
               ${e.medianPricePerSqft.toLocaleString("en-US")}/sq ft
             </strong>{" "}
             across {e.compCount} comparable sale{e.compCount === 1 ? "" : "s"}
+            , adjusted to today&apos;s market
           </p>
         </div>
         <CardContent className="p-6 pt-5">
@@ -336,6 +365,11 @@ function EstimateHero({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">
                     {c.address}
+                    {c.stabilized && (
+                      <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                        tax-benefit
+                      </span>
+                    )}
                   </p>
                   <p className="flex items-center gap-1 text-xs text-muted">
                     <Calendar className="size-3" aria-hidden />
@@ -345,39 +379,116 @@ function EstimateHero({
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-[15px] font-semibold text-foreground">
-                    {formatMoney(c.price)}
+                    {formatMoney(c.adjustedPrice)}
                   </p>
                   <p className="text-xs text-muted">
-                    ${Math.round(c.pricePerSqft).toLocaleString("en-US")}/sq ft
+                    $
+                    {Math.round(c.adjustedPricePerSqft).toLocaleString("en-US")}
+                    /sq ft
                   </p>
                 </div>
               </li>
             ))}
           </ul>
+          <p className="mt-2 text-xs text-muted">
+            Sale prices adjusted to current dollars with the FHFA House Price
+            Index (NY metro, {hpiVintageLabel()}).
+          </p>
 
           <div className="mt-5 rounded-xl bg-accent-soft/50 p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
               How we estimated this
             </p>
             <p className="mt-1.5 text-sm leading-relaxed text-muted">
-              We found {e.compCount} recent {e.criteriaNote}. For each, we
-              divided its sale price by its square footage, took the{" "}
+              We found {e.compCount} {e.criteriaNote}, keeping only comps
+              within ±35% of your home&apos;s size. For each, we adjusted its
+              sale price to today&apos;s dollars, divided by its square
+              footage, trimmed price outliers, and took the{" "}
               <strong className="font-semibold text-foreground">
                 median $/sq ft
               </strong>
-              , and multiplied it by your home&apos;s{" "}
+              , multiplied by your home&apos;s{" "}
               {(e.subject.buildingSqft ?? 0).toLocaleString("en-US")} sq ft
               (per PLUTO). The range is that midpoint ±10% — renovations,
               condition, and lot premiums aren&apos;t in public records, so
               treat this as a starting point, not a price tag.
+              {e.classUnfiltered && (
+                <>
+                  {" "}
+                  <strong className="font-semibold text-foreground">
+                    Heads-up:
+                  </strong>{" "}
+                  we couldn&apos;t match this home&apos;s building class, so
+                  the pool mixes property types — treat this one as a rough
+                  sketch.
+                </>
+              )}
             </p>
           </div>
         </CardContent>
       </Card>
 
+      {/* ACRIS deed anchor — the home's own last sale, for context. */}
+      {e.anchor && <AnchorCard price={e.anchor.price} date={e.anchor.date} adjustedPrice={e.anchor.adjustedPrice} />}
+
+      {/* Rent-stabilization flag. */}
+      {e.subjectStabilized && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+            Rent-stabilization flag
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
+            City tax records show an active 421-a or J-51 benefit on this
+            building — those programs typically require rent-stabilized
+            rents, which trade at a{" "}
+            <strong className="font-semibold text-foreground">
+              discount to free-market pricing
+            </strong>
+            . Comparable sales may reflect free-market buildings.
+            {e.stabilizedCompCount > 0 &&
+              ` ${e.stabilizedCompCount} of the ${e.compCount} comps show the same benefit type.`}
+          </p>
+        </div>
+      )}
+
       {/* Subject property facts (compact strip — the estimate's inputs). */}
       <SubjectStrip profile={e.subject} />
     </div>
+  );
+}
+
+function AnchorCard({
+  price,
+  date,
+  adjustedPrice,
+}: {
+  price: number;
+  date: string;
+  adjustedPrice: number;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-1 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+            Last recorded sale (ACRIS deed records)
+          </p>
+          <p className="mt-1 text-xl font-bold tracking-tight text-foreground">
+            {formatMoney(price)}{" "}
+            <span className="text-sm font-medium text-muted">
+              in {formatDate(date)}
+            </span>
+          </p>
+        </div>
+        <p className="text-sm text-muted">
+          ≈{" "}
+          <strong className="font-semibold text-foreground">
+            {formatMoney(adjustedPrice)}
+          </strong>{" "}
+          in today&apos;s market
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 

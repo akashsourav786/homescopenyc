@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { SiteCta } from "@/components/site-cta";
 
 // Self-hosted-at-build fonts via next/font: CSS variables --font-inter and
 // --font-inter-tight, consumed by globals.css. No runtime CDN dependency.
@@ -39,6 +41,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>
+          {/* usePathname needs a Suspense boundary during prerender. */}
+          <Suspense fallback={null}>
+            <SiteCta />
+          </Suspense>
           <SiteFooter />
         </ThemeProvider>
       </body>

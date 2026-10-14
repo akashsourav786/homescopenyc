@@ -8,18 +8,27 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  COMP_LOOKBACK_DAYS,
   MIN_COMPS,
+  applyMarketAdjustment,
   classLetter,
   classLetterLabel,
   estimateFromComps,
   estimateHomeValue,
   formatRangeK,
   getComparableSales,
+  getLastArmsLengthDeed,
+  getStabilizedBbls,
+  hpiVintageLabel,
+  isStabCode,
   lookbackIso,
   median,
   normalizeCompSale,
+  parseBblParts,
   parseSqft,
   roundToNearest1k,
+  saleQuarter,
+  timeAdjustFactor,
 } from "./home-worth";
 import type { PropertyProfile } from "./types";
 
@@ -64,6 +73,18 @@ function saleRow(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+/** Flat HPI series pinning the market-adjustment factor to exactly 1. */
+const FLAT_HPI = {
+  series: { "2026-Q1": 100 },
+  vintage: "2026-Q1",
+};
+const FLAT_OPTS = { hpiSeries: FLAT_HPI.series, hpiVintage: FLAT_HPI.vintage };
+/** Fixture HPI with a 10% rise Q1→Q2 for adjustment tests. */
+const RISING_HPI = {
+  series: { "2024-Q1": 400, "2024-Q2": 440 },
+  vintage: "2024-Q2",
+};
 
 const mockFetch = (impl: (url: string) => unknown) => {
   const fn = vi.fn(async (url: string) => impl(url));
@@ -211,7 +232,7 @@ describe("estimateFromComps", () => {
       saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }), // 500
       saleRow({ sale_price: "1440000", gross_square_feet: "2,400" }), // 600
     ];
-    const out = estimateFromComps(subjectProfile(), rows);
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     expect(out.estimate.midpoint).toBe(1200000);
@@ -228,7 +249,7 @@ describe("estimateFromComps", () => {
       saleRow({ sale_price: "1440000", gross_square_feet: "2,400" }), // 600
       saleRow({ sale_price: "1400000", gross_square_feet: "2,000" }), // 700
     ];
-    const out = estimateFromComps(subjectProfile(), rows);
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     // median of [400,500,600,700] = 550 → 550 × 2400 = $1,320,000
@@ -245,7 +266,7 @@ describe("estimateFromComps", () => {
       saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }),
       saleRow({ sale_price: "1440000", gross_square_feet: "2,400" }),
     ];
-    const out = estimateFromComps(subjectProfile(), rows);
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     expect(out.estimate.compCount).toBe(3);
@@ -256,7 +277,7 @@ describe("estimateFromComps", () => {
       saleRow({ sale_price: "960000", gross_square_feet: "2,400" }),
       saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }),
     ];
-    const out = estimateFromComps(subjectProfile(), rows);
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
     expect(out.ok).toBe(false);
     if (out.ok) return;
     expect(out.reason).toBe("few-comps");
@@ -268,6 +289,7 @@ describe("estimateFromComps", () => {
     const out = estimateFromComps(
       subjectProfile({ buildingSqft: null }),
       [saleRow()],
+      FLAT_OPTS,
     );
     expect(out.ok).toBe(false);
     if (out.ok) return;
@@ -281,7 +303,7 @@ describe("estimateFromComps", () => {
       saleRow({ sale_price: "1000000" }),
       saleRow({ sale_price: "1100000" }),
     ];
-    const out = estimateFromComps(subjectProfile(), rows);
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     expect(out.estimate.criteriaNote).toContain("two-family homes");
@@ -294,40 +316,50 @@ describe("estimateFromComps", () => {
 /* ------------------------------------------------------------------ */
 
 describe("getComparableSales", () => {
-  it("queries zip + class letter + date window, newest first", async () => {
+  it("exact tier filters on the full building class", async () => {
     const seen: string[] = [];
     mockFetch((url: string) => {
       seen.push(url);
       return okJson([saleRow()]);
     });
-    const rows = await getComparableSales("10467", "B", "2025-10-10T00:00:00.000");
+    const rows = await getComparableSales("10467", "B2", "exact", "2025-10-10");
     expect(rows).toHaveLength(1);
-    const url = seen[0];
+    const url = decodeURIComponent(seen[0]);
     expect(url).toContain("data.cityofnewyork.us/resource/w2pb-icbu.json");
-    expect(decodeURIComponent(url)).toContain("zip_code='10467'");
-    expect(decodeURIComponent(url)).toContain(
-      "starts_with(building_class_at_time_of,'B')",
-    );
-    expect(decodeURIComponent(url)).toContain("sale_price >= 1000");
-    expect(decodeURIComponent(url)).toContain("sale_date >=");
-    expect(decodeURIComponent(url)).toContain("sale_date DESC");
+    expect(url).toContain("zip_code='10467'");
+    expect(url).toContain("building_class_at_time_of='B2'");
+    expect(url).not.toContain("starts_with");
+    expect(url).toContain("sale_date DESC");
   });
 
-  it("omits the class filter when the letter is null", async () => {
+  it("letter tier matches the class letter with starts_with", async () => {
     const seen: string[] = [];
     mockFetch((url: string) => {
       seen.push(url);
       return okJson([]);
     });
-    const rows = await getComparableSales("10467", null, "2025-10-10T00:00:00.000");
-    expect(rows).toEqual([]);
-    expect(decodeURIComponent(seen[0])).not.toContain("starts_with");
+    await getComparableSales("10467", "B2", "letter", "2025-10-10");
+    expect(decodeURIComponent(seen[0])).toContain(
+      "starts_with(building_class_at_time_of,'B')",
+    );
+  });
+
+  it("none tier applies no class filter", async () => {
+    const seen: string[] = [];
+    mockFetch((url: string) => {
+      seen.push(url);
+      return okJson([]);
+    });
+    await getComparableSales("10467", "B2", "none", "2025-10-10");
+    expect(decodeURIComponent(seen[0])).not.toContain(
+      "building_class_at_time_of",
+    );
   });
 
   it("throws PropertyDataError on a non-array payload", async () => {
     mockFetch(() => okJson({ not: "an array" }));
     await expect(
-      getComparableSales("10467", "B", "2025-10-10T00:00:00.000"),
+      getComparableSales("10467", "B2", "exact", "2025-10-10"),
     ).rejects.toMatchObject({ name: "PropertyDataError", code: "parse" });
   });
 });
@@ -335,8 +367,13 @@ describe("getComparableSales", () => {
 describe("lookbackIso", () => {
   it("returns a date-only string ~365 days before now (calendar_date-safe)", () => {
     const now = new Date("2026-10-10T12:00:00.000Z").getTime();
-    const iso = lookbackIso(now);
+    const iso = lookbackIso(COMP_LOOKBACK_DAYS, now);
     expect(iso).toBe("2025-10-10");
+  });
+
+  it("supports a wider window for the fallback tier", () => {
+    const now = new Date("2026-10-10T12:00:00.000Z").getTime();
+    expect(lookbackIso(730, now)).toBe("2024-10-10");
   });
 });
 
@@ -382,6 +419,13 @@ describe("estimateHomeValue", () => {
       if (url.includes("geosearch.planninglabs.nyc")) return okJson(GEO_JSON);
       if (url.includes("64uk-42ks")) return okJson(PLUTO_ROWS);
       if (url.includes("w2pb-icbu")) return okJson(salesRows);
+      // Enrichment endpoints: empty by default (no anchor, not stabilized).
+      if (
+        url.includes("8h5j-fqxa") ||
+        url.includes("bnx9-e6tj") ||
+        url.includes("muvi-b6kx")
+      )
+        return okJson([]);
       throw new Error("unexpected URL " + url);
     });
   }
@@ -392,13 +436,17 @@ describe("estimateHomeValue", () => {
       saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }),
       saleRow({ sale_price: "1440000", gross_square_feet: "2,400" }),
     ]);
-    const out = await estimateHomeValue("123 Example St, Bronx");
+    const out = await estimateHomeValue("123 Example St, Bronx", FLAT_OPTS);
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     expect(out.estimate.midpoint).toBe(1200000);
     expect(out.estimate.low).toBe(1080000);
     expect(out.estimate.high).toBe(1320000);
     expect(out.estimate.subject.bbl).toBe("2025670010");
+    expect(out.estimate.windowDays).toBe(365);
+    expect(out.estimate.classTier).toBe("exact");
+    expect(out.estimate.anchor).toBeNull();
+    expect(out.estimate.subjectStabilized).toBe(false);
   });
 
   it("throws not-found when the geocoder misses", async () => {
@@ -424,7 +472,7 @@ describe("estimateHomeValue", () => {
 
   it("returns few-comps (not throw) when sales are thin", async () => {
     mockPipeline([saleRow()]);
-    const out = await estimateHomeValue("123 Example St, Bronx");
+    const out = await estimateHomeValue("123 Example St, Bronx", FLAT_OPTS);
     expect(out.ok).toBe(false);
     if (out.ok) return;
     expect(out.reason).toBe("few-comps");
@@ -439,7 +487,7 @@ describe("estimateHomeValue", () => {
         return okJson([{ ...PLUTO_ROWS[0], bldgarea: null }]);
       return okJson([saleRow()]);
     });
-    const out = await estimateHomeValue("123 Example St, Bronx");
+    const out = await estimateHomeValue("123 Example St, Bronx", FLAT_OPTS);
     expect(out.ok).toBe(false);
     if (out.ok) return;
     expect(out.reason).toBe("no-subject-sqft");
@@ -447,5 +495,350 @@ describe("estimateHomeValue", () => {
 
   it("requires at least MIN_COMPS valid comps", () => {
     expect(MIN_COMPS).toBe(3);
+  });
+
+  it("widens the window to 24 months when 12 months are thin", async () => {
+    let salesCalls = 0;
+    mockFetch((url: string) => {
+      if (url.includes("geosearch.planninglabs.nyc")) return okJson(GEO_JSON);
+      if (url.includes("64uk-42ks")) return okJson(PLUTO_ROWS);
+      if (
+        url.includes("8h5j-fqxa") ||
+        url.includes("bnx9-e6tj") ||
+        url.includes("muvi-b6kx")
+      )
+        return okJson([]);
+      if (url.includes("w2pb-icbu")) {
+        salesCalls++;
+        return okJson(
+          salesCalls === 1
+            ? [saleRow()]
+            : [
+                saleRow({ sale_price: "960000", gross_square_feet: "2,400" }),
+                saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }),
+                saleRow({ sale_price: "1100000", gross_square_feet: "2,800" }),
+              ],
+        );
+      }
+      throw new Error("unexpected URL " + url);
+    });
+    const out = await estimateHomeValue("123 Example St, Bronx", FLAT_OPTS);
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(salesCalls).toBe(2);
+    expect(out.estimate.windowDays).toBe(730);
+    expect(out.estimate.classTier).toBe("exact");
+    // $/sqft 400, 500, ~393 → median 400 × 2400 sqft
+    expect(out.estimate.midpoint).toBe(960000);
+  });
+
+  it("attaches the ACRIS anchor and stabilization flags", async () => {
+    mockFetch((url: string) => {
+      if (url.includes("geosearch.planninglabs.nyc")) return okJson(GEO_JSON);
+      if (url.includes("64uk-42ks")) return okJson(PLUTO_ROWS);
+      if (url.includes("w2pb-icbu"))
+        return okJson([
+          saleRow({ sale_price: "960000", gross_square_feet: "2,400" }),
+          saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }),
+          saleRow({ sale_price: "1440000", gross_square_feet: "2,400" }),
+        ]);
+      if (url.includes("8h5j-fqxa"))
+        return okJson([{ document_id: "2026081800268001" }]);
+      if (url.includes("bnx9-e6tj"))
+        return okJson([
+          {
+            document_id: "2026081800268001",
+            doc_type: "DEED",
+            document_date: "2026-08-04T00:00:00.000",
+            document_amt: "707500",
+          },
+        ]);
+      if (url.includes("muvi-b6kx")) return okJson([{ parid: "2025670010" }]);
+      throw new Error("unexpected URL " + url);
+    });
+    const out = await estimateHomeValue("123 Example St, Bronx", FLAT_OPTS);
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.estimate.anchor?.price).toBe(707500);
+    expect(out.estimate.anchor?.date).toBe("2026-08-04");
+    expect(out.estimate.subjectStabilized).toBe(true);
+    expect(out.estimate.stabilizedCompCount).toBe(0);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* saleQuarter / timeAdjustFactor / hpiVintageLabel                      */
+/* ------------------------------------------------------------------ */
+
+describe("saleQuarter", () => {
+  it("maps ISO dates to quarters", () => {
+    expect(saleQuarter("2025-11-26T00:00:00.000")).toBe("2025-Q4");
+    expect(saleQuarter("2026-01-01")).toBe("2026-Q1");
+    expect(saleQuarter("2024-06-30")).toBe("2024-Q2");
+  });
+  it("returns null for bad dates", () => {
+    expect(saleQuarter("not-a-date")).toBeNull();
+    expect(saleQuarter("")).toBeNull();
+  });
+});
+
+describe("timeAdjustFactor", () => {
+  it("scales by the index ratio", () => {
+    expect(
+      timeAdjustFactor("2024-02-15", RISING_HPI.series, RISING_HPI.vintage),
+    ).toBeCloseTo(1.1, 6);
+  });
+  it("returns 1 for the vintage quarter or newer", () => {
+    expect(
+      timeAdjustFactor("2024-05-01", RISING_HPI.series, RISING_HPI.vintage),
+    ).toBe(1);
+    expect(
+      timeAdjustFactor("2025-01-01", RISING_HPI.series, RISING_HPI.vintage),
+    ).toBe(1);
+  });
+  it("returns 1 for unknown quarters or bad dates", () => {
+    expect(
+      timeAdjustFactor("1990-01-01", RISING_HPI.series, RISING_HPI.vintage),
+    ).toBe(1);
+    expect(timeAdjustFactor("junk", RISING_HPI.series, RISING_HPI.vintage)).toBe(
+      1,
+    );
+  });
+});
+
+describe("hpiVintageLabel", () => {
+  it("formats the vintage for display", () => {
+    expect(hpiVintageLabel("2026-Q2")).toBe("Q2 2026");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* normalizeCompSale: BBL capture / applyMarketAdjustment               */
+/* ------------------------------------------------------------------ */
+
+describe("normalizeCompSale extras", () => {
+  it("captures the comp BBL and defaults to no market adjustment", () => {
+    const c = normalizeCompSale(saleRow())!;
+    expect(c.bbl).toBe("2025670020");
+    expect(c.adjustFactor).toBe(1);
+    expect(c.adjustedPrice).toBe(c.price);
+    expect(c.adjustedPricePerSqft).toBe(c.pricePerSqft);
+    expect(c.stabilized).toBe(false);
+  });
+  it("nulls a malformed BBL", () => {
+    expect(normalizeCompSale(saleRow({ bbl: "junk" }))!.bbl).toBeNull();
+    expect(normalizeCompSale(saleRow({ bbl: null }))!.bbl).toBeNull();
+  });
+});
+
+describe("applyMarketAdjustment", () => {
+  it("scales price and $/sqft, leaving raw values untouched", () => {
+    const c = normalizeCompSale(
+      saleRow({
+        sale_date: "2024-02-15T00:00:00.000",
+        sale_price: "400000",
+        gross_square_feet: "1,000",
+      }),
+    )!;
+    const [adj] = applyMarketAdjustment([c], RISING_HPI.series, RISING_HPI.vintage);
+    expect(adj.adjustFactor).toBeCloseTo(1.1, 6);
+    expect(adj.adjustedPrice).toBe(440000);
+    expect(adj.adjustedPricePerSqft).toBeCloseTo(440, 6);
+    expect(adj.price).toBe(400000);
+    expect(c.adjustFactor).toBe(1); // input untouched
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* estimateFromComps: size band + outlier trim                          */
+/* ------------------------------------------------------------------ */
+
+describe("estimateFromComps selection", () => {
+  it("excludes comps outside the ±35% size band", () => {
+    const rows = [
+      saleRow({ sale_price: "960000", gross_square_feet: "2,400" }), // in band
+      saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }), // in band
+      saleRow({ sale_price: "1100000", gross_square_feet: "2,800" }), // in band
+      saleRow({ sale_price: "2000000", gross_square_feet: "5,000" }), // OUT
+    ];
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.estimate.compCount).toBe(3);
+  });
+
+  it("counts only in-band comps toward the minimum", () => {
+    const rows = [
+      saleRow({ sale_price: "960000", gross_square_feet: "2,400" }),
+      saleRow({ sale_price: "2000000", gross_square_feet: "5,000" }),
+      saleRow({ sale_price: "3000000", gross_square_feet: "6,000" }),
+    ];
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
+    expect(out.ok).toBe(false);
+    if (out.ok) return;
+    expect(out.reason).toBe("few-comps");
+    expect(out.compsFound).toBe(1);
+  });
+
+  it("trims $/sqft outliers before the final median", () => {
+    const rows = [
+      saleRow({ sale_price: "960000", gross_square_feet: "2,400" }), // 400
+      saleRow({ sale_price: "1200000", gross_square_feet: "2,400" }), // 500
+      saleRow({ sale_price: "1440000", gross_square_feet: "2,400" }), // 600
+      saleRow({ sale_price: "7500", gross_square_feet: "1,700" }), // 4.4 — nominal
+    ];
+    const out = estimateFromComps(subjectProfile(), rows, FLAT_OPTS);
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    // Without the trim the $7,500 row would drag the median to 450.
+    expect(out.estimate.medianPricePerSqft).toBe(500);
+    expect(out.estimate.compCount).toBe(3);
+    expect(out.estimate.midpoint).toBe(1200000);
+  });
+
+  it("marks stabilized comps from the provided BBL set", () => {
+    const rows = [
+      saleRow({ sale_price: "960000", gross_square_feet: "2,400" }),
+      saleRow({ sale_price: "1000000", gross_square_feet: "2,000" }),
+      saleRow({
+        sale_price: "1100000",
+        gross_square_feet: "2,800",
+        bbl: "2025670099",
+      }),
+    ];
+    const out = estimateFromComps(subjectProfile(), rows, {
+      ...FLAT_OPTS,
+      stabilizedBbls: new Set(["2025670099", "2025670010"]),
+    });
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.estimate.stabilizedCompCount).toBe(1);
+    expect(out.estimate.subjectStabilized).toBe(true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* parseBblParts / isStabCode                                           */
+/* ------------------------------------------------------------------ */
+
+describe("parseBblParts", () => {
+  it("splits a 10-digit BBL into ACRIS parts", () => {
+    expect(parseBblParts("2037980082")).toEqual({
+      boro: "2",
+      block: "3798",
+      lot: "82",
+    });
+  });
+  it("returns null for malformed input", () => {
+    expect(parseBblParts("nope")).toBeNull();
+    expect(parseBblParts("123")).toBeNull();
+  });
+});
+
+describe("isStabCode", () => {
+  it("flags 421-a and J-51 codes", () => {
+    expect(isStabCode("5100")).toBe(true);
+    expect(isStabCode("5114")).toBe(true);
+    expect(isStabCode("5122")).toBe(true);
+    expect(isStabCode("5129")).toBe(true);
+    expect(isStabCode("5130")).toBe(true);
+  });
+  it("rejects other codes and junk", () => {
+    expect(isStabCode("5131")).toBe(false);
+    expect(isStabCode("1234")).toBe(false);
+    expect(isStabCode(null)).toBe(false);
+    expect(isStabCode("51")).toBe(false);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* getLastArmsLengthDeed (mocked fetch)                                 */
+/* ------------------------------------------------------------------ */
+
+describe("getLastArmsLengthDeed", () => {
+  it("picks the latest arm's-length DEED, skipping SAT/MTGE/nominal deeds", async () => {
+    const seen: string[] = [];
+    mockFetch((url: string) => {
+      seen.push(url);
+      if (url.includes("8h5j-fqxa"))
+        return okJson([{ document_id: "A1" }, { document_id: "A2" }]);
+      if (url.includes("bnx9-e6tj"))
+        return okJson([
+          {
+            document_id: "A2",
+            doc_type: "SAT",
+            document_date: "2026-08-17T00:00:00.000",
+            document_amt: "0",
+          },
+          {
+            document_id: "A1",
+            doc_type: "DEED",
+            document_date: "2026-08-04T00:00:00.000",
+            document_amt: "707500",
+          },
+          {
+            document_id: "A3",
+            doc_type: "DEED",
+            document_date: "1983-01-04T00:00:00.000",
+            document_amt: "0",
+          },
+        ]);
+      throw new Error("unexpected URL " + url);
+    });
+    const anchor = await getLastArmsLengthDeed("2037980082");
+    expect(anchor?.price).toBe(707500);
+    expect(anchor?.date).toBe("2026-08-04");
+    const legalsUrl = decodeURIComponent(seen[0]);
+    expect(legalsUrl).toContain("8h5j-fqxa.json");
+    expect(legalsUrl).toContain("borough=2");
+  });
+
+  it("returns null when no arm's-length deed exists", async () => {
+    mockFetch((url: string) => {
+      if (url.includes("8h5j-fqxa")) return okJson([{ document_id: "A1" }]);
+      return okJson([
+        {
+          document_id: "A1",
+          doc_type: "MTGE",
+          document_date: "2020-01-01T00:00:00.000",
+          document_amt: "500000",
+        },
+      ]);
+    });
+    expect(await getLastArmsLengthDeed("2037980082")).toBeNull();
+  });
+
+  it("returns null for a malformed BBL without fetching", async () => {
+    const fn = mockFetch(() => okJson([]));
+    expect(await getLastArmsLengthDeed("nope")).toBeNull();
+    expect(fn).not.toHaveBeenCalled();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* getStabilizedBbls (mocked fetch)                                     */
+/* ------------------------------------------------------------------ */
+
+describe("getStabilizedBbls", () => {
+  it("returns BBLs carrying 421-a/J-51 benefits via parid", async () => {
+    const seen: string[] = [];
+    mockFetch((url: string) => {
+      seen.push(url);
+      return okJson([{ parid: "2025670010" }, { parid: "2025670020" }]);
+    });
+    const set = await getStabilizedBbls(["2025670010", "3001234567", "junk"]);
+    expect(set.has("2025670010")).toBe(true);
+    expect(set.has("3001234567")).toBe(false);
+    const url = decodeURIComponent(seen[0]);
+    expect(url).toContain("muvi-b6kx");
+    expect(url).toContain("parid in(");
+    expect(url).toContain("exmp_code>='5100'");
+  });
+
+  it("returns an empty set without fetching when no BBL is valid", async () => {
+    const fn = mockFetch(() => okJson([]));
+    expect((await getStabilizedBbls([])).size).toBe(0);
+    expect((await getStabilizedBbls(["junk"])).size).toBe(0);
+    expect(fn).not.toHaveBeenCalled();
   });
 });
