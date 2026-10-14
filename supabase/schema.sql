@@ -34,4 +34,9 @@ create policy "Public can submit consultation requests"
   to anon
   with check (true);
 
+-- Table privileges: an RLS policy alone is not enough — the anon role also
+-- needs the table-level INSERT privilege, or PostgREST rejects every
+-- insert with "new row violates row-level security policy" (42501).
+grant insert on consultation_requests to anon;
+
 -- No SELECT policy for anon: reads stay blocked unless via service role key.
