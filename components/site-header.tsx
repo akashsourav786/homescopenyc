@@ -174,11 +174,11 @@ export function SiteHeader() {
               "flex shrink-0 items-center gap-3 rounded-lg",
               focusRing,
             )}
-            aria-label="HomeScope NYC home"
+            aria-label="RahmanRealty PropertyLab home"
           >
-            {/* HomeScope wordmark (text — no HomeScope logo exists yet) */}
-            <span className="font-display text-[19px] font-extrabold tracking-tight">
-              HomeScope <span className="text-accent">NYC</span>
+            {/* RahmanRealty PropertyLab wordmark (text — no logo exists yet) */}
+            <span className="font-display text-[17px] font-extrabold tracking-tight">
+              RahmanRealty <span className="text-accent">PropertyLab</span>
             </span>
           </Link>
 

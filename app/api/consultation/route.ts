@@ -35,7 +35,7 @@ async function notifyLead(row: LeadRow): Promise<void> {
   const to = process.env.LEAD_NOTIFY_EMAIL;
   if (!apiKey || !to) return;
   const from =
-    process.env.LEAD_NOTIFY_FROM ?? "HomeScope NYC <onboarding@resend.dev>";
+    process.env.LEAD_NOTIFY_FROM ?? "RahmanRealty PropertyLab <onboarding@resend.dev>";
   const { subject, text } = buildNotificationEmail(row);
   try {
     await fetch("https://api.resend.com/emails", {

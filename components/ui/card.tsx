@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * shadcn/ui-style Card primitives, themed with HomeScope tokens:
+ * shadcn/ui-style Card primitives, themed with RahmanRealty PropertyLab tokens:
  * rounded cards, subtle borders, generous padding.
  */
 const Card = React.forwardRef<

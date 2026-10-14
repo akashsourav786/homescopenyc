@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * shadcn/ui-style Button.
- * Variants use HomeScope design tokens so they adapt to light/dark themes.
+ * Variants use RahmanRealty PropertyLab design tokens so they adapt to light/dark themes.
  */
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-colors " +

@@ -18,8 +18,8 @@ const interTight = Inter_Tight({
 
 export const metadata: Metadata = {
   title: {
-    default: "HomeScope NYC — Free NYC Real Estate Toolkit",
-    template: "%s · HomeScope NYC",
+    default: "RahmanRealty PropertyLab — Free NYC Real Estate Toolkit",
+    template: "%s · RahmanRealty PropertyLab",
   },
   description:
     "Free, mobile-first real estate tools for NYC buyers and sellers — created by Akash Rahman Sourav, NY Licensed Real Estate Salesperson, EXIT Realty DKC.",

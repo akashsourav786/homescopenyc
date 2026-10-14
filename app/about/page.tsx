@@ -6,7 +6,7 @@ import { CreatorPhoto } from "@/components/creator-photo";
 
 export const metadata: Metadata = { title: "About Akash" };
 
-/** Why HomeScope NYC exists — the three purposes, in Akash's voice. */
+/** Why RahmanRealty PropertyLab exists — the three purposes, in Akash's voice. */
 const PURPOSES = [
   {
     icon: HandHeart,
@@ -45,7 +45,7 @@ export default function AboutPage() {
       {/* ---------- Page header ---------- */}
       <section className="pt-8 sm:pt-12">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-          The creator behind HomeScope NYC
+          The creator behind RahmanRealty PropertyLab
         </p>
         <h1 className="mt-2 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
           About Akash
@@ -92,9 +92,9 @@ export default function AboutPage() {
       </section>
 
       {/* ---------- Why I built it ---------- */}
-      <section aria-label="Why I built HomeScope NYC" className="mt-6">
+      <section aria-label="Why I built RahmanRealty PropertyLab" className="mt-6">
         <h2 className="text-lg font-bold tracking-tight">
-          Why I built HomeScope NYC
+          Why I built RahmanRealty PropertyLab
         </h2>
         <ul className="mt-4 grid gap-3">
           {PURPOSES.map(({ icon: Icon, tile, ink, title, body }) => (

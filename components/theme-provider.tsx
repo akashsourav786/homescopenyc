@@ -13,7 +13,7 @@ import {
 export type Theme = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
-const STORAGE_KEY = "homescope-theme";
+const STORAGE_KEY = "rahmanrealty-propertylab-theme";
 
 interface ThemeContextValue {
   theme: Theme;

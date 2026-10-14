@@ -1,12 +1,12 @@
-# HomeScope NYC
+# RahmanRealty PropertyLab
 
 A free, mobile-first real estate toolkit for NYC buyers and sellers.
 
-**Created by Akash Rahman** — NY Licensed Real Estate Salesperson, EXIT Realty DKC.
+**Created by Akash Rahman Sourav** — NY Licensed Real Estate Salesperson, EXIT Realty DKC.
 
 ## What it is
 
-HomeScope NYC provides genuinely useful, easy-to-understand real estate tools:
+RahmanRealty PropertyLab provides genuinely useful, easy-to-understand real estate tools:
 buyer qualification estimates, true monthly cost breakdowns, seller net
 proceeds, property intelligence from NYC public data, and more — while
 demonstrating real expertise in both real estate and technology.

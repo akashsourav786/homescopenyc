@@ -19,10 +19,10 @@ export function SiteFooter() {
             <Link
               href="/"
               className="inline-flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-              aria-label="HomeScope NYC home"
+              aria-label="RahmanRealty PropertyLab home"
             >
               <span className="font-display text-[17px] font-extrabold tracking-tight">
-                HomeScope <span className="text-accent">NYC</span>
+                RahmanRealty <span className="text-accent">PropertyLab</span>
               </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
@@ -66,7 +66,7 @@ export function SiteFooter() {
             [Privacy Policy · Terms of Use — placeholders]
           </p>
           <p className="mt-4 text-xs text-muted">
-            © <CurrentYear /> HomeScope NYC · Created by Akash Rahman Sourav, NY
+            © <CurrentYear /> RahmanRealty PropertyLab · Created by Akash Rahman Sourav, NY
             Licensed Real Estate Salesperson, EXIT Realty DKC. Equal Housing
             Opportunity. · Not a listing service.
           </p>
