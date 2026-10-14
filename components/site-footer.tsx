@@ -28,7 +28,7 @@ export function SiteFooter() {
             <p className="mt-4 text-sm leading-relaxed text-muted">
               A free NYC real estate toolkit, created by{" "}
               <span className="font-semibold text-foreground">
-                Akash Rahman
+                Akash Rahman Sourav
               </span>
               , NY Licensed Real Estate Salesperson, EXIT Realty DKC.
             </p>
@@ -66,7 +66,7 @@ export function SiteFooter() {
             [Privacy Policy · Terms of Use — placeholders]
           </p>
           <p className="mt-4 text-xs text-muted">
-            © <CurrentYear /> HomeScope NYC · Created by Akash Rahman, NY
+            © <CurrentYear /> HomeScope NYC · Created by Akash Rahman Sourav, NY
             Licensed Real Estate Salesperson, EXIT Realty DKC. Equal Housing
             Opportunity. · Not a listing service.
           </p>

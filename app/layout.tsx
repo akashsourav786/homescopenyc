@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s · HomeScope NYC",
   },
   description:
-    "Free, mobile-first real estate tools for NYC buyers and sellers — created by Akash Rahman, NY Licensed Real Estate Salesperson, EXIT Realty DKC.",
+    "Free, mobile-first real estate tools for NYC buyers and sellers — created by Akash Rahman Sourav, NY Licensed Real Estate Salesperson, EXIT Realty DKC.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

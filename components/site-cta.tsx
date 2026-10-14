@@ -21,7 +21,7 @@ export function SiteCta() {
       >
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-[26px] font-extrabold tracking-tight sm:text-[32px]">
-            Built by Akash Rahman
+            Built by Akash Rahman Sourav
           </h2>
           <p className="mt-2 max-w-xl text-[14.5px] leading-relaxed opacity-70">
             NY Licensed Real Estate Salesperson, EXIT Realty DKC. Every number

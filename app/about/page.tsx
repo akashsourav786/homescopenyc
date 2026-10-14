@@ -57,7 +57,7 @@ export default function AboutPage() {
           <CreatorPhoto />
           <div className="min-w-0">
             <p className="text-xl font-extrabold tracking-tight">
-              Akash Rahman
+              Akash Rahman Sourav
             </p>
             <p className="mt-1 text-[14px] font-medium">
               NY Licensed Real Estate Salesperson

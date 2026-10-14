@@ -13,20 +13,20 @@ export default function HomePage() {
     <>
       <Container>
         {/* ---------- Hero ---------- */}
-        <section className="pb-14 pt-14 sm:pb-20 sm:pt-24">
+        <section className="pb-10 pt-10 sm:pb-14 sm:pt-14">
           <p className="text-[12px] font-bold uppercase tracking-[0.24em] text-accent-strong">
             Free tools — no signup
           </p>
-          <h1 className="mt-6 font-display text-[56px] font-extrabold leading-[0.98] tracking-[-0.035em] sm:text-[96px] lg:text-[120px]">
+          <h1 className="mt-4 font-display text-[38px] font-extrabold leading-[1.02] tracking-[-0.02em] sm:text-[52px] lg:text-[60px]">
             Know what
             <br />
             you can <span className="text-accent">afford.</span>
           </h1>
-          <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-muted sm:text-lg">
+          <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-muted sm:text-lg">
             Six precise calculators for NYC buyers and sellers. Real
             underwriting math, public records, zero fluff.
           </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button
               asChild
               size="lg"

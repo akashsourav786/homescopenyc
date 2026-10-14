@@ -17,7 +17,7 @@ export function CreatorPhoto({
   return (
     <span
       role="img"
-      aria-label="Portrait of Akash Rahman (placeholder monogram)"
+      aria-label="Portrait of Akash Rahman Sourav (placeholder monogram)"
       className={cn(
         "flex h-20 w-20 shrink-0 items-center justify-center rounded-full",
         "bg-pastel-lavender text-2xl font-bold text-pastel-lavender-ink",
