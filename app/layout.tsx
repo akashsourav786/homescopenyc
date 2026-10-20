@@ -17,10 +17,10 @@ const interTight = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://rahmanrealty786.app"),
+  metadataBase: new URL("https://akashsellsnyc.app"),
   title: {
-    default: "RahmanRealty PropertyLab — Free NYC Real Estate Toolkit",
-    template: "%s · RahmanRealty PropertyLab",
+    default: "akash sells nyc — Property Lab · Free NYC Real Estate Toolkit",
+    template: "%s · akash sells nyc",
   },
   description:
     "Free, mobile-first real estate tools for NYC buyers and sellers — created by Akash Rahman Sourav, NY Licensed Real Estate Salesperson, EXIT Realty DKC.",

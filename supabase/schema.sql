@@ -1,4 +1,4 @@
--- RahmanRealty PropertyLab — Stage 9: consultation_requests table
+-- akash sells nyc — Property Lab — Stage 9: consultation_requests table
 -- Run this once in the Supabase SQL Editor (project dashboard → SQL → New query).
 
 create table if not exists consultation_requests (

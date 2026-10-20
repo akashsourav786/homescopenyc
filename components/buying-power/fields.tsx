@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Small form primitives for the calculator, styled in the RahmanRealty
+ * Small form primitives for the calculator, styled in the akash sells nyc
  * warm-minimal language. All inputs are controlled; parents own the state.
  */
 

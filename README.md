@@ -1,4 +1,4 @@
-# RahmanRealty PropertyLab
+# akash sells nyc — Property Lab
 
 A free, mobile-first real estate toolkit for NYC buyers and sellers.
 
@@ -6,7 +6,7 @@ A free, mobile-first real estate toolkit for NYC buyers and sellers.
 
 ## What it is
 
-RahmanRealty PropertyLab provides genuinely useful, easy-to-understand real estate tools:
+akash sells nyc's Property Lab provides genuinely useful, easy-to-understand real estate tools:
 buyer qualification estimates, true monthly cost breakdowns, seller net
 proceeds, property intelligence from NYC public data, and more — while
 demonstrating real expertise in both real estate and technology.

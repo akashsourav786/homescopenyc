@@ -242,7 +242,7 @@ export function buildNotificationEmail(row: LeadRow): {
   text: string;
 } {
   const lines = [
-    "New consultation request — RahmanRealty PropertyLab",
+    "New consultation request — akash sells nyc (Property Lab)",
     "",
     `Name: ${row.name}`,
     `Email: ${row.email}`,

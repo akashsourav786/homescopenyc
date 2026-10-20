@@ -21,8 +21,8 @@ const CONTACT_METHODS = [
     tile: "bg-pastel-blue",
     ink: "text-pastel-blue-ink",
     label: "Email",
-    value: "rahmanrealty786@gmail.com",
-    href: "mailto:rahmanrealty786@gmail.com",
+    value: "akashsellsnyc@gmail.com",
+    href: "mailto:akashsellsnyc@gmail.com",
   },
   {
     icon: Building2,
@@ -37,8 +37,8 @@ const CONTACT_METHODS = [
     tile: "bg-pastel-peach",
     ink: "text-pastel-peach-ink",
     label: "Instagram",
-    value: "@rahmanrealty",
-    href: "https://instagram.com/rahmanrealty",
+    value: "@akashsellsnyc",
+    href: "https://instagram.com/akashsellsnyc",
   },
 ];
 

@@ -174,11 +174,11 @@ export function SiteHeader() {
               "flex shrink-0 items-center gap-3 rounded-lg",
               focusRing,
             )}
-            aria-label="RahmanRealty PropertyLab home"
+            aria-label="akash sells nyc home"
           >
-            {/* RahmanRealty PropertyLab wordmark (text — no logo exists yet) */}
+            {/* akash sells nyc wordmark (text — no logo exists yet) */}
             <span className="font-display text-[17px] font-extrabold tracking-tight">
-              RahmanRealty <span className="text-accent">PropertyLab</span>
+              akash <span className="text-accent">sells nyc</span>
             </span>
           </Link>
 
