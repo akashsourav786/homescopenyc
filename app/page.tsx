@@ -15,7 +15,7 @@ export default function HomePage() {
         {/* ---------- Hero ---------- */}
         <section className="pb-10 pt-10 sm:pb-14 sm:pt-14">
           <p className="text-[12px] font-bold uppercase tracking-[0.24em] text-accent-strong">
-            Free tools — no signup
+            Property Lab · by Akash Rahman Sourav
           </p>
           <h1 className="mt-4 font-display text-[38px] font-extrabold leading-[1.02] tracking-[-0.02em] sm:text-[52px] lg:text-[60px]">
             Know what
