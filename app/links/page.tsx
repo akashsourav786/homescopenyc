@@ -33,6 +33,11 @@ const LINKS: LinkItem[] = [
     href: "/",
   },
   {
+    title: "About Akash",
+    sub: "The agent who codes — a little about me",
+    href: "/about",
+  },
+  {
     title: "Book a free consultation",
     sub: "Buying, selling, or investing — let's talk numbers",
     href: "/contact",
