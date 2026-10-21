@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 /**
  * Site-wide "Talk to Akash" builder strip, rendered at the bottom of every
  * page (via the root layout) except /contact itself — the CTA's
- * destination, where it would be redundant.
+ * destination, where it would be redundant — and /links, which is
+ * itself a contact hub with the same destinations.
  */
 export function SiteCta() {
   const pathname = usePathname();
-  if (pathname === "/contact") return null;
+  if (pathname === "/contact" || pathname === "/links") return null;
   return (
     <Container className="pb-16 sm:pb-24">
       <section
