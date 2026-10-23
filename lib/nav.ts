@@ -49,7 +49,7 @@ export const TOOLS: ToolDef[] = [
     title: "How Much Can I Buy?",
     tagline: "Estimate your buying power",
     description:
-      "Estimate your buying power from income, debts, savings, and loan assumptions — with clear scenarios.",
+      "Estimate your buying power from income, debts, and savings — or as an investor, from the property's rent with a DSCR loan.",
     href: "/buying-power",
     icon: Calculator,
     tile: "bg-pastel-blue",

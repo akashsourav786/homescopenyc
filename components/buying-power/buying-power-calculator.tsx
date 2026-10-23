@@ -41,6 +41,7 @@ import {
   type PropertyType,
 } from "@/lib/calculators/loan-programs";
 import { NumberField, SelectField, SegmentedControl } from "./fields";
+import { DscrCalculator } from "./dscr-calculator";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -152,7 +153,8 @@ function bindingExplainer(
 
 type ScenarioKey = "conservative" | "higher";
 
-export function BuyingPowerCalculator() {
+/** The original income/DTI calculator (mode: "With my income"). */
+function IncomeBuyingPower() {
   // ---- form state (raw strings for text inputs) ----
   const [annualIncome, setAnnualIncome] = useState("120000");
   const [monthlyDebts, setMonthlyDebts] = useState("500");
@@ -271,32 +273,18 @@ export function BuyingPowerCalculator() {
   }, [sens]);
 
   return (
-    <Container className="max-w-3xl py-8 sm:py-12">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
-          How Much Can I Buy?
-        </h1>
-        <p className="mt-2 flex items-start gap-1.5 text-[15px] text-muted">
-          <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>
-            Get an estimate based on your financial situation.{" "}
-            <strong className="font-semibold text-foreground">
-              This is not a loan approval.
-            </strong>
+    <>
+      {/* Multifamily rental-income callout (income mode only) */}
+      <div className="mb-6 rounded-xl border border-pastel-mint-ink/30 bg-pastel-mint/50 p-3.5">
+        <p className="text-sm leading-snug">
+          <strong className="font-bold text-foreground">
+            Buying a 2–4 unit home?
+          </strong>{" "}
+          <span className="text-muted">
+            Select multifamily below — 75% of the rental income you enter
+            counts toward your buying power.
           </span>
         </p>
-        <div className="mt-3 rounded-xl border border-pastel-mint-ink/30 bg-pastel-mint/50 p-3.5">
-          <p className="text-sm leading-snug">
-            <strong className="font-bold text-foreground">
-              Buying a 2–4 unit home?
-            </strong>{" "}
-            <span className="text-muted">
-              Select multifamily below — 75% of the rental income you enter
-              counts toward your buying power.
-            </span>
-          </p>
-        </div>
       </div>
 
       {/* Validation issues (from the last Calculate tap) */}
@@ -784,6 +772,55 @@ export function BuyingPowerCalculator() {
         </Card>
       )}
 
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Page shell — mode toggle between the income (DTI) calculator and   */
+/* the investor (DSCR) calculator. Both stay mounted (the inactive    */
+/* one is hidden) so neither form loses its state when switching.     */
+/* ------------------------------------------------------------------ */
+
+type BuyingMode = "income" | "dscr";
+
+export function BuyingPowerCalculator() {
+  const [mode, setMode] = useState<BuyingMode>("income");
+  return (
+    <Container className="max-w-3xl py-8 sm:py-12">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
+          How Much Can I Buy?
+        </h1>
+        <p className="mt-2 flex items-start gap-1.5 text-[15px] text-muted">
+          <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            Get an estimate based on your financial situation.{" "}
+            <strong className="font-semibold text-foreground">
+              This is not a loan approval.
+            </strong>
+          </span>
+        </p>
+        <div className="mt-5">
+          <SegmentedControl<BuyingMode>
+            label="How are you buying?"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: "income", label: "With my income" },
+              { value: "dscr", label: "As an investor · DSCR" },
+            ]}
+          />
+        </div>
+      </div>
+
+      <div className={mode === "income" ? undefined : "hidden"}>
+        <IncomeBuyingPower />
+      </div>
+      <div className={mode === "dscr" ? undefined : "hidden"}>
+        <DscrCalculator />
+      </div>
     </Container>
   );
 }
